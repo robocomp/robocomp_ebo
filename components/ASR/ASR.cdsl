@@ -1,0 +1,10 @@
+import "ASR.idsl";
+
+Component ASR
+{
+    Communications
+    {
+        implements ASR;
+    };
+    language python;
+};

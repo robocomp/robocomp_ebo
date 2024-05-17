@@ -1,0 +1,10 @@
+import "LLM.idsl";
+
+Component LLM
+{
+    Communications
+    {
+        implements LLM;
+    };
+    language python;
+};
