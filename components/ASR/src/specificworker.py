@@ -34,8 +34,83 @@ console = Console(highlight=False)
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
 
+# audio managment
+from multiprocessing import Process, Queue, Event
+import numpy as np
+import pyaudio
+import wave
+
+# voice detection with respeaker
+from tuning import Tuning
+import usb.core
+import usb.util
+
+# allows to execute commands
+import subprocess
+import os
+
+#################################### PORCUPINE #####################################
+
+ACCESS_KEY = "YhpQKilovfhz5/6XxLxq+Wmiz45bbtBUVruBptzYOdHqfyHhaUTpLw=="
+PPN_PATH = "./src/audio-config/hello-shadow_en_linux_v3_0_0/hello-shadow_en_linux_v3_0_0.ppn"
+
+############################### AUDIO DEVICE CONFIG ################################
+
+####### initial configuration
+RESPEAKER_RATE = 16000
+RESPEAKER_CHANNELS = 1  # Cambia según tus ajustes
+RESPEAKER_WIDTH = 2
+FORMAT = pyaudio.paInt16  # calidad de audio. probar float32 o float64
+OUTPUT_FILENAME = "record.wav"
+
+# instancia
+audio = pyaudio.PyAudio()
+
+# print available audio devices 
+# num_devices = audio.get_device_count()
+
+# print("Lista de dispositivos de audio disponibles:")
+# for i in range(num_devices):
+#     device_info = audio.get_device_info_by_index(i)
+#     device_name = device_info["name"]
+#     print(f"Dispositivo {i}: {device_name}")
+
+# searching its index
+target_device_name = "ReSpeaker 4 Mic Array (UAC1.0): USB Audio" # our device name
+target_device_index = 0
+info = audio.get_host_api_info_by_index(0)
+numdevices = info.get('deviceCount')
+
+for i in range(numdevices):
+    device_info = audio.get_device_info_by_host_api_device_index(0, i)
+    if device_info.get('maxInputChannels') > 0:
+        if target_device_name in device_info.get('name'):
+            target_device_index = i
+
+# opening audio stream if the device was found
+if target_device_index is not None:
+    stream = audio.open(
+        format=audio.get_format_from_width(RESPEAKER_WIDTH),
+        channels=RESPEAKER_CHANNELS,
+        rate=RESPEAKER_RATE,
+        input=True,
+        input_device_index=target_device_index
+    )
+else:
+    print(f"{target_device_name} was not found.")
+
+############################### SILENCES AND PAUSES ################################
+
+SILENCE_DURATION = 2  # silence duration required to finish the program
+PAUSE_DURATION = 0.5  # pause duration required to transcript a record
+
+################################# SPECIFICWORKER ###################################
 
 class SpecificWorker(GenericWorker):
+
+    ############################
+    # initial configuration 
+    ############################
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 2000
@@ -60,19 +135,6 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
-
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
 
         return True
 
@@ -93,15 +155,55 @@ class SpecificWorker(GenericWorker):
         # write your CODE here
         #
         return ret
-    #
-    # IMPLEMENTATION of listenMicro method from ASR interface
-    #
+
+    ############################
+    # LISTEN MICRO INTERFACE
+    ############################
+    def generate_wav(self, file_name, record): 
+        with wave.open(file_name, 'wb') as wf:
+            wf.setnchannels(RESPEAKER_CHANNELS)
+            wf.setsampwidth(audio.get_sample_size(FORMAT))
+            wf.setframerate(RESPEAKER_RATE)
+            wf.writeframes(b''.join(record))
+
+    def call_whisper(self, audio_file): 
+        command = ["whisper", audio_file, "--model", "small", "--language", "Spanish"]
+        subprocess.run(command, check=True)
+
+    def transcript(self, frame): 
+        self.generate_wav(OUTPUT_FILENAME, frame)
+        self.call_whisper(OUTPUT_FILENAME)
+        with open("user_response.txt", "a") as prompt_file:
+            subprocess.run(["cat", "record.txt"], stdout=prompt_file)
+    
+    def manage_transcription(self):
+        while not self.silence_detected.is_set():
+            if not self.record_queue.empty():
+                frame = self.record_queue.get()
+                self.transcript(frame)
+
+        # clean queue before finish
+        while not self.record_queue.empty():
+            frame = self.record_queue.get()
+            self.transcript(frame)
+        
+    def terminate(self):
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+        self.porcupine.delete()
+
+    def delete_transcription(self):
+        if os.path.exists("user_response.txt"):
+            subprocess.run(["rm", "user_response.txt"])
+
     def ASR_listenMicro(self, timeout):
-        ret = str()
-        #
-        # write your CODE here
-        #
-        return ret
+        user_response = str()
+        
+
+
+        print(user_response)
+        return user_response
     #
     # IMPLEMENTATION of listenVector method from ASR interface
     #
