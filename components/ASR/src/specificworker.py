@@ -37,6 +37,17 @@ console = Console(highlight=False)
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
+        """
+        Sets up an instance of the `SpecificWorker` class, initializing its
+        `proxy_map`, `Period` and `timer`. It also performs a startup check or
+        starts a timer depending on the value of `startup_check`.
+
+        Args:
+            proxy_map (int): mapping of proxy ports to original ports.
+            startup_check (bool): functionality to check the status of the startup
+                process when the timer starts.
+
+        """
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 2000
         if startup_check:
@@ -59,6 +70,14 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
+        """
+        Sets speed base for a robot proxy, updates transform values in an internal
+        model, and prints out a vector containing the values of a pose transformation.
+
+        Returns:
+            int: a boolean value `True`.
+
+        """
         print('SpecificWorker.compute...')
         # computeCODE
         # try:
@@ -88,6 +107,13 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of getLastPhrase method from ASR interface
     #
     def ASR_getLastPhrase(self):
+        """
+        Generates a high-quality documentation string for given code.
+
+        Returns:
+            str: a string containing the last processed phrase.
+
+        """
         ret = str()
         #
         # write your CODE here
@@ -97,6 +123,18 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of listenMicro method from ASR interface
     #
     def ASR_listenMicro(self, timeout):
+        """
+        Listens for audio input from a microphone, returns it as a string, and
+        provides no further functionality.
+
+        Args:
+            timeout (int): amount of time that the `str()` method call takes before
+                returning an error.
+
+        Returns:
+            str: a string representation of the audio data.
+
+        """
         ret = str()
         #
         # write your CODE here
@@ -128,6 +166,15 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of phraseAvailable method from ASR interface
     #
     def ASR_phraseAvailable(self):
+        """
+        Returns a boolean value indicating whether a speech recognition phrase is
+        available for processing.
+
+        Returns:
+            bool: a boolean value indicating whether a phrase is available for
+            speech recognition.
+
+        """
         ret = bool()
         #
         # write your CODE here

@@ -39,6 +39,15 @@ class GenericWorker(QtCore.QObject):
     kill = QtCore.Signal()
 
     def __init__(self, mprx):
+        """
+        Initializes an instance of `GenericWorker`. It creates a mutex and sets
+        its recursive lock to `True`, then initializes a timer with a 30-second
+        period for background tasks.
+
+        Args:
+            mprx (int): mutex object that controls access to the protected resource.
+
+        """
         super(GenericWorker, self).__init__()
 
 
@@ -56,6 +65,16 @@ class GenericWorker(QtCore.QObject):
     # @param per Period in ms
     @QtCore.Slot(int)
     def setPeriod(self, p):
+        """
+        Changes the period of a timer, then starts the timer with the new period
+        using the `start` method.
+
+        Args:
+            p (int): period of the timer and is assigned to the `Period` attribute
+                of the `Timer` object, which then starts the timer using the given
+                period.
+
+        """
         print("Period changed", p)
         self.Period = p
         self.timer.start(self.Period)

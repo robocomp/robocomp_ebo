@@ -37,6 +37,18 @@ console = Console(highlight=False)
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
+        """
+        Initializes a worker object by defining the proxy map, setting the period
+        for the timer to 2000 milliseconds, and connecting a callback to run the
+        `compute` function upon timeout.
+
+        Args:
+            proxy_map (dict): map of proxies that will be used by the instance
+                when executing its tasks.
+            startup_check (bool): execution of a startup check function, which is
+                executed if it is present in the function's call.
+
+        """
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 2000
         if startup_check:
@@ -59,6 +71,14 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
+        """
+        Sets speed, updates transform values for the head rot and tilt pose,
+        computes a QVec matrix for laser, and prints the resulting vector.
+
+        Returns:
+            bool: a boolean value `True`.
+
+        """
         print('SpecificWorker.compute...')
         # computeCODE
         # try:
@@ -88,6 +108,14 @@ class SpecificWorker(GenericWorker):
     # IMPLEMENTATION of generateResponse method from LLM interface
     #
     def LLM_generateResponse(self):
+        """
+        Takes no arguments and returns a string value representing high-quality
+        documentation for given code.
+
+        Returns:
+            str: a string representing high-quality documentation for given code.
+
+        """
         ret = str()
         #
         # write your CODE here

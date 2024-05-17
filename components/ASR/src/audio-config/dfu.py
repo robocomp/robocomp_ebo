@@ -68,6 +68,14 @@ class DFU(object):
         return devices
 
     def __init__(self):
+        """
+        Initializes and prepares a `Device` object for use. It retrieves a list
+        of DFU devices from the system, checks if only one device is found, and
+        extracts information about the selected device. Additionally, it determines
+        if the kernel driver is active on the selected interface and detaches it
+        before claiming the interface for use.
+
+        """
         devices = self.find()
         if not devices:
             raise ValueError('No DFU device found')
@@ -85,6 +93,30 @@ class DFU(object):
 
     def __enter__(self):
         # TODO: suppose the device has more than 1 interface at Run-Time
+        """
+        Enables the USB device interface, detects re-enumeration of the DFU device,
+        and claims the interface for the Python code to interact with it.
+
+        Returns:
+            usb.Device` object: the detached and claimed USB interface.
+            
+            		- `self.num_interfaces`: This variable holds the number of interfaces
+            associated with the `Usb` object. If it is greater than 1, the function
+            enters DFU mode and performs further actions accordingly.
+            		- `self._detach()`: This method detaches the kernel driver from the
+            interface.
+            		- `self.close()`: This method closes the device connection.
+            		- `devices`: This variable holds a list of devices that are found
+            during the enumeration process.
+            		- `devices[0][2]`: This variable holds the device index in the list
+            of devices. If it is equal to 1, it means that a DFU device was found.
+            		- `self.device`, `self.interface`: These variables hold the device
+            and interface information returned by the `find()` method.
+            		- `if self.device.is_kernel_driver_active(self.interface)`: This
+            check determines if the kernel driver is active on the interface. If
+            it is, the method detaches the kernel driver before claiming the interface.
+
+        """
         if self.num_interfaces > 1:
             print('entering dfu mode')
             self._detach()
@@ -151,6 +183,15 @@ class DFU(object):
 
 
     def _get_status(self):
+        """
+        Retrieves status information from a device and returns it in the form of
+        a tuple containing four values: status, timeout, state, and status description.
+
+        Returns:
+            int: a tuple containing four values: `status`, `timeout`, `state`, and
+            `status_description`.
+
+        """
         data = self._in_request(self.DFU_GETSTATUS, 6)
 
         status = data[0]
@@ -170,11 +211,68 @@ class DFU(object):
         return self._out_request(self.DFU_ABORT)
 
     def _out_request(self, request, value=0, data=None):
+        """
+        Sends an outgoing control message from a device to a recipient interface
+        within the same class and type as the calling function.
+
+        Args:
+            request (USB packet command code (USB.util.CTRL_TYPE_CLASS).): 7-bit
+                or 10-bit control code to be transmitted over the USB interface.
+                
+                		- `usb.util.CTRL_OUT`: Specifies that the control transfer is
+                being sent from the device to the host.
+                		- `usb.util.CTRL_TYPE_CLASS`: Specifies that the control transfer
+                is a class-specific command.
+                		- `usb.util.CTRL_RECIPIENT_INTERFACE`: Specifies that the control
+                transfer is addressed to a particular interface on the device.
+                		- `value`: The value of the control transfer request, which can
+                be one of the enumerated values from `usb.util.CtrlTransferRequest`.
+                		- `self.interface`: The interface number for which the control
+                transfer is being sent.
+                		- `data`: A variable that contains data related to the control
+                transfer request, such as the endpoint address or other configuration
+                settings.
+                		- `self.TIMEOUT`: The maximum time allowed for completing the
+                control transfer operation in milliseconds.
+            value (int): 8-bit or 16-bit integer value to be written to the USB
+                device as part of the control transfer request.
+            data (int): 8-bit interface number for the transaction.
+
+        Returns:
+            int: a standard USB error code.
+
+        """
         return self.device.ctrl_transfer(
             usb.util.CTRL_OUT | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE,
             request, value, self.interface, data, self.TIMEOUT)
 
     def _in_request(self, request, length):
+        """
+        Performs a control transfer operation on the connected USB device using
+        the provided request value and parameter.
+
+        Args:
+            request (`usb.util.CTRL_REQUEST`.): 8-bit request value that determines
+                the type of control transfer being performed.
+                
+                		- `usb.util.CTRL_IN`: indicates that this is an inbound control
+                transfer request.
+                		- `usb.util.CTRL_TYPE_CLASS`: specifies the control class
+                associated with the request.
+                		- `usb.util.CTRL_RECIPIENT_INTERFACE`: identifies the interface
+                to which the request is directed.
+                		- `0x0`: the value of the recipient index, indicating that the
+                request is intended for the interface associated with this object.
+                		- `self.interface`: references the current interface being worked
+                on.
+                		- `length`: specifies the size of the input buffer.
+            length (int): length of the data transfer buffer for the control
+                transfer request.
+
+        Returns:
+            int: a boolean value indicating the result of the control transfer operation.
+
+        """
         return self.device.ctrl_transfer(
             usb.util.CTRL_IN | usb.util.CTRL_TYPE_CLASS | usb.util.CTRL_RECIPIENT_INTERFACE,
             request, 0x0, self.interface, length, self.TIMEOUT)
@@ -215,6 +313,20 @@ class XMOS_DFU(DFU):
 @click.option('--download', '-d', nargs=1, type=click.File('rb'), help='the firmware to download')
 @click.option('--revertfactory', is_flag=True, help="factory reset")
 def main(download, revertfactory):
+    """
+    Allows the user to either download a file or revert a factory default on an
+    XMOS device using the `XMOS_DFU()` class.
+
+    Args:
+        download (int): 64-bit download address of the firmware file to be downloaded
+            onto the XMOS device.
+        revertfactory (`object` or a class that can be downcast to an object.):
+            command to revert the factory settings of the device when passed as `True`.
+            
+            		- `download`: This is a boolean value indicating whether the
+            `revertfactory` should download any data during its execution.
+
+    """
     dev = XMOS_DFU()
 
     with dev:
