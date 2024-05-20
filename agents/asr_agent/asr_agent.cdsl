@@ -1,0 +1,12 @@
+import "ASR.idsl";
+
+Component asr_agent
+{
+    Communications
+    {
+        requires ASR;
+    };
+    language python;
+    options dsr;
+};
+

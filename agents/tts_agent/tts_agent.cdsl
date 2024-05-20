@@ -1,0 +1,12 @@
+import "EmotionalMotor.idsl";
+
+Component tts_agent
+{
+    Communications
+    {
+	requires EmotionalMotor;
+    };
+    language python;
+    options dsr;
+};
+
