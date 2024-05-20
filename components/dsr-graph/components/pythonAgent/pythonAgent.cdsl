@@ -1,0 +1,9 @@
+Component pythonAgent
+{
+    Communications
+    {
+    };
+    language python;
+};
+
+

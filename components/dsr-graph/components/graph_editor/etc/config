@@ -1,0 +1,28 @@
+CommonBehavior.Endpoints=tcp -p 10020
+
+# Proxies for required interfaces
+DSRGetIDProxy = dsrgetid:tcp -h localhost -p 11000
+
+agent_id = 20
+agent_name = graph_editor
+
+#dsr_input_file = /home/robo02/robocomp/components/dsr-graph/components/giraff_dsr/giraff_dsr.json
+#dsr_input_file = /home/robolab/robocomp/components/dsr-graph/etc/exterior-robolab.json
+dsr_input_file = /home/robocomp/robocomp/components/robocomp-giraff/etc/betagiraff_servo.json
+#dsr_input_file = /home/robocomp/robocomp/components/dsr-graph/etc/autonomyLab_objects_container.simscene.json
+dsr_output_path = /home/robolab/robocomp/components/dsr-graph/etc
+dsr_output_file = /home/robolab/robocomp/components/robocomp-giraff/etc/betagiraff_servo.json
+test_output_file = /home/robolab/robocomp/components/dsr-graph/etc/exteriorobolab.txt
+
+
+
+tree_view = false
+graph_view = false
+2d_view = false
+3d_view = false
+
+
+
+Ice.Warn.Connections=0
+Ice.Trace.Network=0
+Ice.Trace.Protocol=0

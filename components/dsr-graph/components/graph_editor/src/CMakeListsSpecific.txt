@@ -1,0 +1,66 @@
+
+if((NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/))
+   execute_process(COMMAND "mkdir" "3rd_party"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+      RESULT_VARIABLE mkdir_result)
+endif()
+
+if((NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/QtMaterialDesignIcons))
+    execute_process(COMMAND "git" "clone" "https://github.com/sthlm58/QtMaterialDesignIcons.git"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/
+      RESULT_VARIABLE git_result)
+endif()
+
+SET(CMAKE_AUTOUIC ON)
+SET(CMAKE_AUTOMOC ON)
+SET(CMAKE_AUTORCC ON)
+
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
+
+#file(GLOB qt_solutions_SRC CONFIGURE_DEPENDS
+#"/home/robolab/robocomp/components/dsr-graph/components/graph_editor/src/3rd_party/qt-solutions/qtpropertybrowser/src/*.h"
+#"/home/robolab/robocomp/components/dsr-graph/components/graph_editor/src/3rd_party/qt-solutions/qtpropertybrowser/src/*.cpp"
+#)
+
+# Sources set
+SET ( SOURCES
+    specificworker.cpp
+    specificmonitor.cpp
+    GraphEditorView.h
+    GraphEditorView.cpp
+    GraphNewElementDialog.h
+    GraphNewAttributeDialog.h
+    QAttributeBrowser.cpp
+    QAttributeBrowser.h
+    3rd_party/QtMaterialDesignIcons/sources/MaterialDesignIcons.cpp
+    3rd_party/QtMaterialDesignIcons/resources/QtMaterialIcons.qrc
+#    ${qt_solutions_SRC}
+)
+
+# Headers set
+SET ( HEADERS
+    specificworker.h
+    specificmonitor.h
+)
+
+
+find_package(dsr_gui)
+find_package(dsr_api)
+find_package(dsr_core)
+find_package(qmat)
+find_package(Qt5 COMPONENTS Svg CONFIG REQUIRED)
+INCLUDE( $ENV{ROBOCOMP}/cmake/modules/opencv4.cmake )
+add_definitions(-g  -fmax-errors=1 -std=c++20 )
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fmax-errors=5" )
+SET(SPECIFIC_LIBS
+dsr_gui dsr_api dsr_core qmat
+fastcdr fastrtps osgDB OpenThreads Eigen3::Eigen Qt5::Svg )
+
+# SET(SPECIFIC_INCLUDES_DIR
+# 3rd_party/qt-solutions/qtpropertybrowser/src/
+# )
+
+
+
+

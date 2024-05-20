@@ -1,0 +1,45 @@
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+# Sources set
+SET ( SOURCES
+  specificworker.cpp
+  specificmonitor.cpp
+  tests/CRDT_change_attribute.cpp
+  tests/CRDT_concurrent_operations.cpp
+  tests/CRDT_conflict_resolution.cpp
+  tests/CRDT_insert_remove_edge.cpp
+  tests/CRDT_insert_remove_node.cpp
+  tests/DSR_test.cpp
+)
+
+# Headers set
+SET ( HEADERS
+  specificworker.h
+  specificmonitor.h
+)
+
+SET ( TEST_SOURCES
+  unittests/G_api_test.cpp
+)
+
+# Headers set
+SET ( TEST_HEADERS
+  unittests/catch.hpp
+  DSRGetID.h
+)
+
+SET ( BENCH_SOURCES
+    benchmark/bench.cpp
+)
+
+# Headers set
+SET ( BENCH_HEADERS
+  benchmark/bench.h
+)
+
+
+set(CMAKE_CXX_STANDARD 20)
+add_definitions(-fmax-errors=1 -std=c++20 -O1 -fno-char8_t)
+SET(SPECIFIC_LIBS  pthread dsr_core dsr_gui dsr_api  fastcdr fastrtps osgDB  Eigen3::Eigen)
+set(CMAKE_BUILD_TYPE Debug)
+
+

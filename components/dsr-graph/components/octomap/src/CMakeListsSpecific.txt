@@ -1,0 +1,25 @@
+
+INCLUDE_DIRECTORIES(
+  ${/usr/include/QGLViewer}
+)
+
+# Sources set
+SET ( SOURCES
+  specificworker.cpp
+  specificmonitor.cpp
+  collisions.cpp
+  custom_widget.cpp
+)
+
+# Headers set
+SET ( HEADERS
+  specificworker.h
+  specificmonitor.h
+)
+
+set(CMAKE_CXX_STANDARD 17)
+
+add_definitions(-O3  -march=native -fmax-errors=1 -std=c++2a -I /usr/include/QGLViewer)
+SET (LIBS dsr_core dsr_gui dsr_api  fastcdr fastrtps osgDB OpenThreads octovis octomath octomap fcl GL GLU QGLViewer-qt5)
+
+
