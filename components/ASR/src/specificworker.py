@@ -49,11 +49,6 @@ import usb.util
 import subprocess
 import os
 
-#################################### PORCUPINE #####################################
-
-ACCESS_KEY = "YhpQKilovfhz5/6XxLxq+Wmiz45bbtBUVruBptzYOdHqfyHhaUTpLw=="
-PPN_PATH = "./src/audio-config/hello-shadow_en_linux_v3_0_0/hello-shadow_en_linux_v3_0_0.ppn"
-
 ############################### AUDIO DEVICE CONFIG ################################
 
 ####### initial configuration
@@ -102,7 +97,9 @@ else:
 ############################### SILENCES AND PAUSES ################################
 
 SILENCE_DURATION = 2  # silence duration required to finish the program
-PAUSE_DURATION = 0.5  # pause duration required to transcript a record
+PAUSE_DURATION = 1  # pause duration required to transcript a record
+BUFFER_DURATION = 0.5  # Duración del buffer en segundos
+BUFFER_LENGTH = int(RESPEAKER_RATE * BUFFER_DURATION)
 
 ################################# SPECIFICWORKER ###################################
 
@@ -113,23 +110,25 @@ class SpecificWorker(GenericWorker):
     ############################
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes an instance of `SpecificWorker`, taking a `proxy_map` parameter
-        and setting `Period` to 2000 milliseconds. It also performs a startup check
-        and connects the `compute()` method to the timer's timeout event, starting
-        the timer after setting its duration to ` Period`.
+        Initializes an instance of `SpecificWorker`, creating a proxy map and
+        setting its period to 2000 milliseconds. It then performs startup checks
+        or connects a timer for computation when the timer expires, depending on
+        a given condition.
 
         Args:
-            proxy_map (dict): map of proxy classes that are used to wrap the actual
-                worker instances, allowing for dynamic switching between different
-                worker implementations without modifying the base `SpecificWorker`
-                class.
-            startup_check (int): initialization method that will be executed when
-                the instance of the `SpecificWorker` is created, which includes
-                checking the system and initiating any necessary processes or operations.
+            proxy_map (dict): mapping of proxy classes to their corresponding
+                instance objects, which is used to initiate the worker object.
+            startup_check (`object`.): functionality to check whether the worker
+                is starting up or not and run any required code if necessary when
+                the worker starts.
+                
+                		- `startup_check`: a boolean attribute that determines whether
+                the worker should perform startup checks or not.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 2000
+
         if startup_check:
             self.startup_check()
         else:
@@ -151,10 +150,17 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Computes something, returning a `True` value to indicate success.
+        Verifies if a provided value is specific and returns `True` if it is,
+        otherwise returns `False`.
 
         Returns:
-            bool: `True`.
+            True` value: `True`.
+            
+            		- The output is a `True` value, indicating that the computation was
+            successful.
+            
+            	No further information or properties are provided beyond this single
+            fact.
 
         """
         print('SpecificWorker.compute...')
@@ -174,11 +180,11 @@ class SpecificWorker(GenericWorker):
     #
     def ASR_getLastPhrase(self):
         """
-        Returns a string value representing the last phrase from a given input of
-        text.
+        Returns a string value representing the last phrase spoken by the user,
+        as recorded by the Audio Stream Reader module.
 
         Returns:
-            str: a string representing the last spoken phrase.
+            str: a string containing the last phrase spoken.
 
         """
         ret = str()
@@ -192,24 +198,25 @@ class SpecificWorker(GenericWorker):
     ############################
     def generate_wav(self, file_name, record): 
         """
-        Modifies the provided audio data and opens a file for writing in WAV format.
-        The channels, sample width, and framerate are set to specified values. The
-        written data is the concatenation of the provided audio data bytes joined
-        together with empty strings.
+        Modifies an existing file using the `wave` module and opens it in write
+        mode (`'wb'`). It then sets the channel count, sample width, and frame
+        rate to specified values before writing new audio data to the file.
 
         Args:
-            file_name (str): name of the file to which the audio data is written.
-            record (`bytes` object in this code function.): 3D audio data to be
-                written to the output file as a sequence of floating-point values.
+            file_name (str): file to be written with the modified audio data.
+            record (bytes-typed array.): 3D audio data that is written to the file
+                by the function, composed of multiple channels of sampled audio
+                data at a specific frame rate.
                 
-                		- `b''.join(record)`: This is a list of byte strings that make
-                up the audio data.
-                		- `RESPEAKER_CHANNELS`: This is an integer constant representing
-                the number of channels in the audio data (e.g., 2 for stereo).
-                		- `AUDIO_FORMAT`: This is a string constant representing the
-                audio format (e.g., "PCM", "OPUS", etc.).
-                		- `RESPEAKER_RATE`: This is an integer constant representing the
-                frame rate of the audio data (e.g., 44.1 kHz for CD quality).
+                		- `b''.join(record)`: The `record` is a list of byte strings
+                representing the audio samples in WAV format. Joining these byte
+                strings with an empty string (`b''`) creates a single string that
+                can be written to the output file using the `writeframes()` method.
+                		- `RESPEAKER_CHANNELS`: The number of channels in the WAV file,
+                which is set to 1 in this case.
+                		- `RESPEAKER_RATE`: The frame rate at which the audio samples
+                are written to the output file, which is set to 44.1 kHz in this
+                case.
 
         """
         with wave.open(file_name, 'wb') as wf:
@@ -219,18 +226,17 @@ class SpecificWorker(GenericWorker):
             wf.writeframes(b''.join(record))
 
     def call_whisper(self, audio_file): 
-        command = ["whisper", audio_file, "--model", "small", "--language", "Spanish"]
+        command = ["whisper", audio_file, "--model", "base", "--language", "Spanish", "--temperature", "0.2"]
         subprocess.run(command, check=True)
 
     def transcript(self, frame): 
         """
-        Generates high-quality documentation for code given to it, by creating an
-        output file and running a subprocess command to write the code's response
-        to a text file.
+        Generates high-quality documentation for given code, including saving
+        output to a file and reading user input from another file.
 
         Args:
-            frame (int): 3D convolution frame to be processed and generated as an
-                audio waveform in the output file.
+            frame (int): frame number for which the audio will be generated in the
+                output file.
 
         """
         self.generate_wav(OUTPUT_FILENAME, frame)
@@ -240,8 +246,8 @@ class SpecificWorker(GenericWorker):
     
     def manage_transcription(self):
         """
-        Handles a record queue and transcribes frames from it, clearing the queue
-        before finishing.
+        Cleans and transcribes audio frames from a queue, transcribing each frame
+        before cleaning the queue again.
 
         """
         while not self.silence_detected.is_set():
@@ -256,14 +262,13 @@ class SpecificWorker(GenericWorker):
         
     def terminate(self):
         """
-        Halts a running object's activity and releases resources, including closing
-        an underlying file or socket connection.
+        Stops a running `Audio` stream, frees any associated resources, and ends
+        the stream's playback.
 
         """
         stream.stop_stream()
         stream.close()
         audio.terminate()
-        self.porcupine.delete()
 
     def delete_transcription(self):
         if os.path.exists("user_response.txt"):
@@ -271,23 +276,91 @@ class SpecificWorker(GenericWorker):
 
     def ASR_listenMicro(self, timeout):
         """
-        Is designed to process and analyze spoken audio input from a microphone,
-        providing a high-quality output documentation.
+        1/ Deletes a previous transcription 2. Starts a transcription process 3.
+        Listens for voice and pauses, checking for durations 4. Enqueues audio
+        fragments for transcription when a pause is reached 5. Joins the transcription
+        process when no voice is detected during a silence duration
 
         Args:
-            timeout (int): maximum amount of time that the `run()` method may take
-                to execute, and it is used to prevent an infinite loop if the
-                execution of the `run()` method takes longer than expected.
+            timeout (float): maximum duration for which the program listens before
+                considering it to be silence and ending the program.
 
         Returns:
-            str: a string of text.
+            str: a sentence describing what the user has said, if they have spoken
+            at all.
 
         """
         user_response = str()
-        
+
+        # clean the directory
+        self.delete_transcription()
+
+        #initialize params
+        self.novoice_counter = 0
+        self.silence_detected = Event()
+        self.pause_detected = False
+        self.record_queue = Queue()
+
+        # start multiprocessing management
+        transcription_process = Process(target=self.manage_transcription)
+        transcription_process.start()
+
+        # initialize detector of Reaspeaker
+        mic_tunning = Tuning(usb.core.find(idVendor=0x2886, idProduct=0x0018))
+        record = []  # save the recording after the wake word has been detected
+
+        try:
+            print("Listening...")
+
+            while not self.silence_detected.is_set():
+                # take an audio fragment
+                pcm = stream.read(BUFFER_LENGTH, exception_on_overflow=False)
+                pcm = np.frombuffer(pcm, dtype=np.int16)
 
 
-        print(user_response)
+
+                record.append(pcm.copy()) # add audio fragment if we have started the record
+
+                # voice detection
+                if mic_tunning.is_voice(): # if voice detected
+                    self.novoice_counter = 0  # restart no voice detection
+                    self.pause_detected = False
+                else: 
+                    self.novoice_counter += 1
+                    
+                    # check if a pause duration has been reached
+                    if self.novoice_counter >= PAUSE_DURATION*4 and not self.pause_detected:
+                        print("Pause")
+                        self.pause_detected = True
+
+                        if record:  # Check if the record list is not empty
+                            # enqueue the fragment for transcription 
+                            self.record_queue.put(record.copy())
+                            record.clear()
+
+                    # check if a silence duration has been reached to finish the program
+                    if self.novoice_counter >= SILENCE_DURATION*4:
+                        print("Silence")
+                        self.silence_detected.set()
+
+                        transcription_process.join()
+
+                        if os.path.exists("user_response.txt"):
+                            # read user_response.txt content
+                            with open("user_response.txt", "r") as file:
+                                user_response = file.read()
+                        
+                            if not user_response.strip():
+                                user_response = "The user did not respond"
+                        else: 
+                            user_response = "The user did not respond"
+
+        except KeyboardInterrupt:
+            transcription_process.join()
+            user_response = "Sorry, I couldn't listen to you."
+            self.terminate()
+            
+        print("Lo que he escuchado ha sido: ", user_response)
         return user_response
     #
     # IMPLEMENTATION of listenVector method from ASR interface
@@ -316,11 +389,12 @@ class SpecificWorker(GenericWorker):
     #
     def ASR_phraseAvailable(self):
         """
-        Evaluates to a boolean value indicating whether an available automated
-        speech recognition (ASR) phrase is present.
+        Is an ambiguous reference to a method that can be either an integer or a
+        boolean value. Its purpose is not provided, and its behavior is therefore
+        unknown.
 
         Returns:
-            bool: a boolean value indicating whether a phrase is available or not.
+            bool: a boolean value indicating whether the phrase is available or not.
 
         """
         ret = bool()
