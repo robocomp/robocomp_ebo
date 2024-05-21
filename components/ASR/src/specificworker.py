@@ -49,11 +49,6 @@ import usb.util
 import subprocess
 import os
 
-#################################### PORCUPINE #####################################
-
-ACCESS_KEY = "YhpQKilovfhz5/6XxLxq+Wmiz45bbtBUVruBptzYOdHqfyHhaUTpLw=="
-PPN_PATH = "./src/audio-config/hello-shadow_en_linux_v3_0_0/hello-shadow_en_linux_v3_0_0.ppn"
-
 ############################### AUDIO DEVICE CONFIG ################################
 
 ####### initial configuration
@@ -102,7 +97,9 @@ else:
 ############################### SILENCES AND PAUSES ################################
 
 SILENCE_DURATION = 2  # silence duration required to finish the program
-PAUSE_DURATION = 0.5  # pause duration required to transcript a record
+PAUSE_DURATION = 1  # pause duration required to transcript a record
+BUFFER_DURATION = 0.5  # Duración del buffer en segundos
+BUFFER_LENGTH = int(RESPEAKER_RATE * BUFFER_DURATION)
 
 ################################# SPECIFICWORKER ###################################
 
@@ -114,6 +111,7 @@ class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
         self.Period = 2000
+
         if startup_check:
             self.startup_check()
         else:
@@ -167,7 +165,7 @@ class SpecificWorker(GenericWorker):
             wf.writeframes(b''.join(record))
 
     def call_whisper(self, audio_file): 
-        command = ["whisper", audio_file, "--model", "small", "--language", "Spanish"]
+        command = ["whisper", audio_file, "--model", "base", "--language", "Spanish", "--temperature", "0.2"]
         subprocess.run(command, check=True)
 
     def transcript(self, frame): 
@@ -191,7 +189,6 @@ class SpecificWorker(GenericWorker):
         stream.stop_stream()
         stream.close()
         audio.terminate()
-        self.porcupine.delete()
 
     def delete_transcription(self):
         if os.path.exists("user_response.txt"):
@@ -199,10 +196,76 @@ class SpecificWorker(GenericWorker):
 
     def ASR_listenMicro(self, timeout):
         user_response = str()
-        
+
+        # clean the directory
+        self.delete_transcription()
+
+        #initialize params
+        self.novoice_counter = 0
+        self.silence_detected = Event()
+        self.pause_detected = False
+        self.record_queue = Queue()
+
+        # start multiprocessing management
+        transcription_process = Process(target=self.manage_transcription)
+        transcription_process.start()
+
+        # initialize detector of Reaspeaker
+        mic_tunning = Tuning(usb.core.find(idVendor=0x2886, idProduct=0x0018))
+        record = []  # save the recording after the wake word has been detected
+
+        try:
+            print("Listening...")
+
+            while not self.silence_detected.is_set():
+                # take an audio fragment
+                pcm = stream.read(BUFFER_LENGTH, exception_on_overflow=False)
+                pcm = np.frombuffer(pcm, dtype=np.int16)
 
 
-        print(user_response)
+
+                record.append(pcm.copy()) # add audio fragment if we have started the record
+
+                # voice detection
+                if mic_tunning.is_voice(): # if voice detected
+                    self.novoice_counter = 0  # restart no voice detection
+                    self.pause_detected = False
+                else: 
+                    self.novoice_counter += 1
+                    
+                    # check if a pause duration has been reached
+                    if self.novoice_counter >= PAUSE_DURATION*4 and not self.pause_detected:
+                        print("Pause")
+                        self.pause_detected = True
+
+                        if record:  # Check if the record list is not empty
+                            # enqueue the fragment for transcription 
+                            self.record_queue.put(record.copy())
+                            record.clear()
+
+                    # check if a silence duration has been reached to finish the program
+                    if self.novoice_counter >= SILENCE_DURATION*4:
+                        print("Silence")
+                        self.silence_detected.set()
+
+                        transcription_process.join()
+
+                        if os.path.exists("user_response.txt"):
+                            # read user_response.txt content
+                            with open("user_response.txt", "r") as file:
+                                user_response = file.read()
+                        
+                            if not user_response.strip():
+                                user_response = "The user did not respond"
+                        else: 
+                            user_response = "The user did not respond"
+
+        except KeyboardInterrupt:
+            transcription_process.join()
+            user_response = "Sorry, I couldn't listen to you."
+            self.terminate()
+            
+        print("Lo que he escuchado ha sido: ", user_response)
         return user_response
     #
     # IMPLEMENTATION of listenVector method from ASR interface
