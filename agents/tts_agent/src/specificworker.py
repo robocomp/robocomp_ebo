@@ -283,6 +283,7 @@ class SpecificWorker(GenericWorker):
         else:
             pass
 
+
     def update_node(self, id: int, type: str):
         console.print(f"UPDATE NODE: {id} {type}", style='green')
 
