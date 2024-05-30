@@ -103,26 +103,20 @@ class SpecificWorker(GenericWorker):
             self.timer.start(self.Period)
 
         self.emotionalmotor_proxy.expressJoy() # Pone a EBO contento al lanzar el agente, como de momento solo vamos a meter ASR, TTS y LLama que tenga buena cara.
-        
-        # Se lee el ID de EBO del grafo
-        id_ebo = self.g.get_id_from_name("EBO")
 
-        # Se crea el nodo TTS (si no existe)y se almacenan tanto el nodo en si como su id
-        if self.g.get_id_from_name("TTS") is not None:
-            tts_node = self.g.get_node("TTS")
-            id_tts = self.g.get_id_from_name("TTS")
+        # Se lee el nodo del grafo
+        tts_node = self.g.get_node("TTS")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo to_say")
+        self.last_text = tts_node.attrs["to_say"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_text == tts_node.attrs["to_say"].value:
+            print("Valores iniciales cargados correctamente")
         else:
-            tts_node, id_tts = self.create_node("tts", "TTS")
-
-        # Creación del edge
-        self.create_edge(id_ebo, id_tts, "has")
-
-        # Modificar atributo intento
-        self.last_text = "¡Hola mundo!"
-        tts_node.attrs["to_say"] = Attribute(self.last_text, self.agent_id)
-        print("Atributo modificado")
-        self.g.update_node(tts_node)
-        print("Nodo actualizado")
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
 
     def __del__(self):
         """Destructor"""
@@ -135,20 +129,6 @@ class SpecificWorker(GenericWorker):
         #	print("Error reading config params")
         return True
 
-    # Crea al nodo pasándole strings que contienen el tipo del nodo y el nombre que aparecerá en el DSR;
-    # y devuelve el nodo y su id (hay que almacenarlos: xxx_node, id_xxx = self.create_node("tipo", "nombre"))
-    def create_node(self, type, name):
-        new_node = Node(agent_id=self.agent_id, type=type, name=name)
-        id_node = self.g.insert_node(new_node)
-        print("Nodo ", name, " creado con ID: ", id_node)
-        return new_node, id_node
-
-    # Crea un edge introduciéndole origen, destino y tipo:
-    # Ej: self.create_edge(x_id, y_id, "tipo")
-    def create_edge(self, fr, to, type):
-        new_edge = Edge(to, fr, type, self.agent_id)
-        cr_edge = self.g.insert_or_assign_edge(new_edge)
-        print("Creado edge tipo ", type, " de ", fr, " a ", to)
 
     # Función que contiene y ejecuta todo lo necesario para generar el audio TTS a partir del texto y reproducirlo. Con la nueva voz del TTS.
     def new_tts(self, text):

@@ -1,0 +1,12 @@
+import "LLM.idsl";
+
+Component llama_agent
+{
+    Communications
+    {
+        requires LLM;
+    };
+    language python;
+    options dsr;
+};
+

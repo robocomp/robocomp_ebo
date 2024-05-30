@@ -132,44 +132,19 @@ class SpecificWorker(GenericWorker):
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
             
-        
-        # Se lee el ID de EBO del grafo
-        id_ebo = self.g.get_id_from_name("EBO")
-        
-        # Se crea el nodo ASR (si no existe)y se almacenan tanto el nodo en si como su id
-        if self.g.get_id_from_name("ASR") is not None:
-            asr_node = self.g.get_node("ASR")
-            id_asr = self.g.get_id_from_name("ASR")
+        # Se lee el nodo del grafo
+        asr_node = self.g.get_node("ASR")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo escuchando")
+        self.last_state = asr_node.attrs["escuchando"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_state == asr_node.attrs["escuchando"].value:
+            print("Valores iniciales cargados correctamente")
         else:
-            asr_node, id_asr = self.create_node("asr", "ASR")
-
-        # Creación del edge
-        self.create_edge(id_ebo, id_asr, "has")
-
-        # Creación de atributos en el nodo.
-        # 2 Atributos:
-        # String --> texto
-        # Bool --> escuchando
-        self.last_text = "Texto escuchado"
-        asr_node.attrs["texto"] = Attribute(self.last_text, self.agent_id)
-        print("Atributo 'texto' creado")
-
-        self.last_state = False
-        asr_node.attrs["escuchando"] = Attribute(self.last_state, self.agent_id)
-        print("Atributo 'escuchando' creado")
-        self.g.update_node(asr_node)
-        print("Nodo actualizado")
-        
-    def create_node(self, type, name):
-        new_node = Node(agent_id = self.agent_id, type= type, name = name)
-        id_node = self.g.insert_node(new_node)
-        print("Nodo ", name, " creado con ID: ", id_node)
-        return new_node, id_node
-    
-    def create_edge(self, fr, to, type):
-        new_edge = Edge(to, fr, type, self.agent_id)
-        cr_edge = self.g.insert_or_assign_edge(new_edge)
-        print("Creado edge tipo ", type, " de ", fr, " a ", to)
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
         
 
     def __del__(self):
