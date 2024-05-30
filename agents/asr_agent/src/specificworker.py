@@ -36,40 +36,102 @@ from pydsr import *
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
 
+# NUEVOS IMPORTS
+# Audio management
+from multiprocessing import Process, Queue, Event
+import numpy as np
+import pyaudio
+import wave
+
+# Voice detection with respeaker
+from tuning import Tuning
+import usb.core
+import usb.util
+
+# Allows to execute commands
+import subprocess
+import os
+
+############################### AUDIO DEVICE CONFIG ################################
+
+####### initial configuration
+RESPEAKER_RATE = 16000
+RESPEAKER_CHANNELS = 1  # Cambia según tus ajustes
+RESPEAKER_WIDTH = 2
+FORMAT = pyaudio.paInt16  # calidad de audio. probar float32 o float64
+OUTPUT_FILENAME = "record.wav"
+
+# instancia
+audio = pyaudio.PyAudio()
+
+# print available audio devices
+# num_devices = audio.get_device_count()
+
+# print("Lista de dispositivos de audio disponibles:")
+# for i in range(num_devices):
+#     device_info = audio.get_device_info_by_index(i)
+#     device_name = device_info["name"]
+#     print(f"Dispositivo {i}: {device_name}")
+
+# searching its index
+target_device_name = "ReSpeaker 4 Mic Array (UAC1.0): USB Audio" # our device name
+target_device_index = 0
+info = audio.get_host_api_info_by_index(0)
+numdevices = info.get('deviceCount')
+
+for i in range(numdevices):
+    device_info = audio.get_device_info_by_host_api_device_index(0, i)
+    if device_info.get('maxInputChannels') > 0:
+        if target_device_name in device_info.get('name'):
+            target_device_index = i
+
+# opening audio stream if the device was found
+if target_device_index is not None:
+    stream = audio.open(
+        format=audio.get_format_from_width(RESPEAKER_WIDTH),
+        channels=RESPEAKER_CHANNELS,
+        rate=RESPEAKER_RATE,
+        input=True,
+        input_device_index=target_device_index
+    )
+else:
+    print(f"{target_device_name} was not found.")
+
+############################### SILENCES AND PAUSES ################################
+
+SILENCE_DURATION = 2  # silence duration required to finish the program
+PAUSE_DURATION = 1  # pause duration required to transcript a record
+BUFFER_DURATION = 0.5  # Duración del buffer en segundos
+BUFFER_LENGTH = int(RESPEAKER_RATE * BUFFER_DURATION)
+
+################################# SPECIFICWORKER ###################################
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Sets up a DSRGraph agent with an ID, connects signals for updating node
-        attributes, and creates nodes and edges. It also reads the EBO ID and
-        creates a new node for audio input processing.
+        Initializes an instance of `DSRGraph` with a unique agent ID and connects
+        signals for updating node attributes and timed computations.
 
         Args:
-            proxy_map (dict): map of proxy nodes to real nodes in the graph,
-                allowing the `DSRGraph` instance to properly handle updates and
-                notifications for the agent.
-            startup_check (`RuntimeError`.): whether to execute the `startup_check()`
-                method upon creation of the object, which checks if the EBO node
-                exists in the graph and creates it if necessary.
+            proxy_map (dict): mapping of nodes and edges in the graph to their
+                corresponding proxies, allowing the agent to interact with the
+                graph more efficiently.
+            startup_check (`RuntimeError`.): execution of a specific check or
+                action during the startup phase of the function.
                 
-                		- `startup_check`: This is a boolean attribute that indicates
-                whether the object has been started or not. It is set to `True`
-                if the object has been started and `False` otherwise.
-                
-                	In the code snippet, the `startup_check` property is used in the
-                following places:
-                
-                		- `if startup_check:`: This line of code checks whether the
-                `startup_check` property is `True` or not. If it is `True`, the
-                method `startup_check()` is called. If it is `False`, no action
-                is taken.
-                		- `else:`: This line of code is executed if the `startup_check`
-                property is `False`. In this case, the object's timer is started
-                with a period of `Period` (which is set to 2000 in the code snippet).
-                
-                	Therefore, `startup_check` is an important attribute in the
-                object's state, indicating whether the object has been started or
-                not.
+                		- `signals`: This is an instance of the `Signals` class, which
+                provides methods for connecting signals to the graph agent's update
+                and event handlers.
+                		- `Period`: This is the time period after which the agent will
+                check if any updates are available.
+                		- `agent_id`: This is a unique integer ID assigned to the agent
+                in the deployment.
+                		- `g`: This is an instance of the `DSRGraph` class, which
+                represents the graph that the agent operates on.
+                		- `startup_check`: This is a boolean value indicating whether
+                the agent should perform a startup check. If `startup_check` is
+                `True`, then the agent will call the `startup_check()` method;
+                otherwise, it will not.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -80,7 +142,7 @@ class SpecificWorker(GenericWorker):
         self.g = DSRGraph(0, "pythonAgent", self.agent_id)
 
         try:
-            #signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
+            signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
             #signals.connect(self.g, signals.UPDATE_NODE, self.update_node)
             #signals.connect(self.g, signals.DELETE_NODE, self.delete_node)
             #signals.connect(self.g, signals.UPDATE_EDGE, self.update_edge)
@@ -96,72 +158,19 @@ class SpecificWorker(GenericWorker):
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
             
-        
-        # Se lee el ID de EBO del grafo
-        id_ebo = self.g.get_id_from_name("EBO")
-        
-        # Se crea el nodo ASR (si no existe)y se almacenan tanto el nodo en si como su id
-        if self.g.get_id_from_name("AR") is not None:
-            asr_node = self.g.get_node("ASR")
-            id_asr = self.g.get_id_from_name("ASR")
+        # Se lee el nodo del grafo
+        asr_node = self.g.get_node("ASR")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo escuchando")
+        self.last_state = asr_node.attrs["escuchando"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_state == asr_node.attrs["escuchando"].value:
+            print("Valores iniciales cargados correctamente")
         else:
-            asr_node, id_asr = self.create_node("asr", "ASR")
-
-        # Creación del edge
-        self.create_edge(id_ebo, id_asr, "has")
-
-        # Creación de atributos en el nodo.
-        self.last_text = "Texto escuchado"
-        asr_node.attrs["texto"] = Attribute(self.last_text, self.agent_id)
-        print("Atributo 'texto' creado")
-        asr_node.attrs["escuchando"] = Attribute(False, self.agent_id)
-        print("Atributo 'escuchando' creado")
-        self.g.update_node(asr_node)
-        print("Nodo actualizado")
-        
-    def create_node(self, type, name):
-        """
-        Takes in a node object with attributes `agent_id`, `type`, and `name`. It
-        creates a new node in the graph using the `insert_node` method and returns
-        both the newly created node and its ID.
-
-        Args:
-            type (str): type of the newly created node.
-            name (str): name of the newly created node.
-
-        Returns:
-            instance of the `Node` class, which is a custom class defined within
-            the scope of the function: a new node object and its corresponding ID.
-            
-            		- `new_node`: The newly created node with the specified agent ID,
-            type, and name.
-            		- `id_node`: The ID of the newly created node, which is generated
-            by the `g.insert_node()` method.
-
-        """
-        new_node = Node(agent_id = self.agent_id, type= type, name = name)
-        id_node = self.g.insert_node(new_node)
-        print("Nodo ", name, " creado con ID: ", id_node)
-        return new_node, id_node
-    
-    def create_edge(self, fr, to, type):
-        """
-        Inserts or assigns an edge with specified `to`, `from`, `type`, and
-        `agent_id` in the graph.
-
-        Args:
-            fr (str): source node of the Edge object created and inserted into the
-                graph.
-            to (str): 2-item pair that forms the new edge, which is being created
-                or assigned in the function.
-            type (str): type of edge being created, allowing the function to
-                distinguish between different types of edges in its insertion or
-                assignment operation.
-
-        """
-        new_edge = Edge(to, fr, type, self.agent_id)
-        cr_edge = self.g.insert_or_assign_edge(new_edge)
-        print("Creado edge tipo ", type, " de ", fr, " a ", to)
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
         
 
     def __del__(self):
@@ -179,27 +188,229 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         #print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
-
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
 
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
+    # =============== Methods for Component Implements ==================
+    # ===================================================================
 
+    #
+    # IMPLEMENTATION of getLastPhrase method from ASR interface
+    #
+    def ASR_getLastPhrase(self):
+        """
+        Takes no arguments and returns a string value, which is the last phrase
+        from a given input of text.
 
+        Returns:
+            str: a string representation of the last spoken phrase.
+
+        """
+        ret = str()
+        #
+        # write your CODE here
+        #
+        return ret
+
+    ############################
+    # LISTEN MICRO INTERFACE
+    ############################
+    def generate_wav(self, file_name, record):
+        """
+        Modifies a file to contain an audio signal with a specified number of
+        channels, sample width, and framerate. It reads a sequence of bytes from
+        the function argument and writes them to the file as audio data.
+
+        Args:
+            file_name (str): file name that contains audio data to be converted
+                and written in a new format.
+            record (list): 2D audio data as a list of signed 16-bit integer values,
+                with each element representing one frame of the audio data.
+
+        """
+        with wave.open(file_name, 'wb') as wf:
+            wf.setnchannels(RESPEAKER_CHANNELS)
+            wf.setsampwidth(audio.get_sample_size(FORMAT))
+            wf.setframerate(RESPEAKER_RATE)
+            wf.writeframes(b''.join(record))
+
+    def call_whisper(self, audio_file):
+        command = ["whisper", audio_file, "--model", "base", "--language", "Spanish", "--temperature", "0.2"]
+        subprocess.run(command, check=True)
+
+    def transcript(self, frame):
+        """
+        Generates high-quality documentation for code by calling a whisper function,
+        writing the output to a file, and appending the input file contents to a
+        user response file.
+
+        Args:
+            frame (int): frame number to be generated as a wave file, and is passed
+                to the `self.call_whisper()` method for further processing.
+
+        """
+        self.generate_wav(OUTPUT_FILENAME, frame)
+        self.call_whisper(OUTPUT_FILENAME)
+        with open("user_response.txt", "a") as prompt_file:
+            subprocess.run(["cat", "record.txt"], stdout=prompt_file)
+
+    def manage_transcription(self):
+        """
+        Clears the record queue before finishing by consuming all frames in the
+        queue and transcribing each one using the `transcript()` method.
+
+        """
+        while not self.silence_detected.is_set():
+            if not self.record_queue.empty():
+                frame = self.record_queue.get()
+                self.transcript(frame)
+
+        # clean queue before finish
+        while not self.record_queue.empty():
+            frame = self.record_queue.get()
+            self.transcript(frame)
+
+    def terminate(self):
+        """
+        Stops the audio streaming process, releases any associated resources, and
+        clears the object reference.
+
+        """
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+
+    def delete_transcription(self):
+        if os.path.exists("user_response.txt"):
+            subprocess.run(["rm", "user_response.txt"])
+
+    def ASR_listenMicro(self, timeout):
+        """
+        Performs real-time audio listening and speech recognition, detecting voice
+        and pauses, enqueuing recordings for transcription, and providing a response
+        to the user based on their spoken input.
+
+        Args:
+            timeout (list): duration of time the function will listen to the user
+                before interrupting and ending the program, and it is used to
+                determine when to stop listening and return a response.
+
+        Returns:
+            str: a transcribed audio response from a user.
+
+        """
+        user_response = str()
+
+        # clean the directory
+        self.delete_transcription()
+
+        # initialize params
+        self.novoice_counter = 0
+        self.silence_detected = Event()
+        self.pause_detected = False
+        self.record_queue = Queue()
+
+        # start multiprocessing management
+        transcription_process = Process(target=self.manage_transcription)
+        transcription_process.start()
+
+        # initialize detector of Reaspeaker
+        mic_tunning = Tuning(usb.core.find(idVendor=0x2886, idProduct=0x0018))
+        record = []  # save the recording after the wake word has been detected
+
+        try:
+            print("Listening...")
+
+            while not self.silence_detected.is_set():
+                # take an audio fragment
+                pcm = stream.read(BUFFER_LENGTH, exception_on_overflow=False)
+                pcm = np.frombuffer(pcm, dtype=np.int16)
+
+                record.append(pcm.copy())  # add audio fragment if we have started the record
+
+                # voice detection
+                if mic_tunning.is_voice():  # if voice detected
+                    self.novoice_counter = 0  # restart no voice detection
+                    self.pause_detected = False
+                else:
+                    self.novoice_counter += 1
+
+                    # check if a pause duration has been reached
+                    if self.novoice_counter >= PAUSE_DURATION * 4 and not self.pause_detected:
+                        print("Pause")
+                        self.pause_detected = True
+
+                        if record:  # Check if the record list is not empty
+                            # enqueue the fragment for transcription
+                            self.record_queue.put(record.copy())
+                            record.clear()
+
+                    # check if a silence duration has been reached to finish the program
+                    if self.novoice_counter >= SILENCE_DURATION * 4:
+                        print("Silence")
+                        self.silence_detected.set()
+
+                        transcription_process.join()
+
+                        if os.path.exists("user_response.txt"):
+                            # read user_response.txt content
+                            with open("user_response.txt", "r") as file:
+                                user_response = file.read()
+
+                            if not user_response.strip():
+                                user_response = "The user did not respond"
+                        else:
+                            user_response = "The user did not respond"
+
+        except KeyboardInterrupt:
+            transcription_process.join()
+            user_response = "Sorry, I couldn't listen to you."
+            self.terminate()
+
+        print("Lo que he escuchado ha sido: ", user_response)
+
+        asr_node = self.g.get_node("ASR")
+
+        if asr_node is None:
+            print("No ASR")
+            return False
+        else:
+            asr_node.attrs["texto"] = Attribute(user_response, self.agent_id)
+            asr_node.attrs["escuchando"] = Attribute(False, self.agent_id)
+            self.last_state = False
+            self.g.update_node(asr_node)
+
+        return user_response
+
+    def hablar_escuchado(self,escuchado):
+        """
+        Modifies an TTS node's "to_say" attribute with a given value, then updates
+        the node in the graph.
+
+        Args:
+            escuchado (Attribute.): attribute value that is being modified for the
+                TTS node.
+                
+                		- `self.agent_id`: The identifier of the agent that generated
+                the audio data.
+                		- `escuchado`: The deserialized audio data.
+
+        Returns:
+            bool: a statement indicating whether TTS is available or not, followed
+            by an update of the TTS node's attribute with the given text.
+
+        """
+        tts_node = self.g.get_node("TTS")
+        if tts_node is None:
+            print("No TTS")
+            return False
+        else:
+            tts_node.attrs["to_say"] = Attribute(escuchado, self.agent_id)
+            print("Atributo modificado")
+            self.g.update_node(tts_node)
 
     ######################
     # From the RoboCompASR you can call this methods:
@@ -215,7 +426,32 @@ class SpecificWorker(GenericWorker):
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
-        console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
+        """
+        Updates the state of a specific node in a graph based on an attribute's
+        value, and performs actions depending on whether the node is listening or
+        not.
+
+        Args:
+            id (int): identifier of the node whose attributes are being checked
+                and updated in the function.
+            attribute_names ([str]): names of the attributes to be printed in green
+                color in the console for updates on the node's attributes.
+
+        """
+        asr_node = self.g.get_node("ASR")
+        if asr_node.attrs["escuchando"].value != self.last_state:
+            self.last_state = asr_node.attrs["escuchando"].value
+            if asr_node.attrs["escuchando"].value == True:
+                print("Empezando a escuchar")
+                escuchado = self.ASR_listenMicro(2)
+                #self.hablar_escuchado(escuchado) # TEST DE REPETIR LO ESCUCHADO
+
+            else:
+                print("No escuchando")
+                pass
+        else:
+            pass
+        #console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
 
     def update_node(self, id: int, type: str):
         console.print(f"UPDATE NODE: {id} {type}", style='green')

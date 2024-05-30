@@ -70,42 +70,18 @@ charsToAvoid = ["'", '"', '{', '}', '[', '<', '>', '(', ')', '&', '$', '|', '#']
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes a MeloTTS worker, setting up various attributes and connections
-        to signals for updates on the graph.
+        Initializes an instance of the `SpecificWorker` class, setting properties
+        related to TTS and the graph. It also connects signals for updating node
+        attributes and starting a timer for the `compute` function.
 
         Args:
-            proxy_map (dict): mapping of graph nodes and edges to the TTS agent's
-                internal state, allowing the TTS agent to interact with the external
-                environment through its proxy node.
-            startup_check (`object`.): Whether or not the TTS agent should perform
-                an additional check during its startup process, which is currently
-                commented out in the given code.
-                
-                	1/ `startup_check`: This is a boolean value indicating whether
-                the agent has been started already or not. If it's `True`, the
-                agent has already been started and no further initialization is
-                required. If it's `False`, the agent has not been started yet, and
-                the `startup_check` method needs to be called to perform the
-                necessary initialization.
-                	2/ `signals`: This is an instance of the `signals` class, which
-                provides a way to connect signals to the agent's graph. The `signals`
-                object has various methods for connecting and disconnecting signals
-                to the agent's graph.
-                	3/ `UPDATE_NODE_ATTR`, `UPDATE_NODE`, `DELETE_NODE`, `UPDATE_EDGE`,
-                `UPDATE_EDGE_ATTR`, and `DELETE_EDGE`: These are various signal
-                names that can be connected to the agent's graph using the `signals`
-                object. These signals can be used to notify the agent of different
-                events, such as node updates, edge updates, node deletion, etc.
-                	4/ `compute`: This is a method that is called by the timer when
-                the ` Period ` variable is reached. The `compute` method performs
-                some computation or processing tasks.
-                	5/ `timer`: This is an instance of the `timer` class, which
-                provides a way to schedule the agent's execution at regular
-                intervals. The `timer` object has various methods for starting and
-                stopping the timer, as well as for updating the ` Period ` variable.
-                	6/ `Period`: This is a variable that represents the interval
-                between each iteration of the agent's computation. It is used to
-                determine how often the agent should execute its `compute` method.
+            proxy_map (dict): mapping of agent ID to a proxy node in the DSRGraph,
+                which is used to connect the agent's signals to the appropriate
+                nodes in the graph.
+            startup_check (bool): initialization of additional functionality during
+                the launching of the agent and can include tasks such as computing
+                node attributes or checking connections to external services before
+                beginning the main loop.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -142,26 +118,20 @@ class SpecificWorker(GenericWorker):
             self.timer.start(self.Period)
 
         self.emotionalmotor_proxy.expressJoy() # Pone a EBO contento al lanzar el agente, como de momento solo vamos a meter ASR, TTS y LLama que tenga buena cara.
-        
-        # Se lee el ID de EBO del grafo
-        id_ebo = self.g.get_id_from_name("EBO")
 
-        # Se crea el nodo TTS (si no existe)y se almacenan tanto el nodo en si como su id
-        if self.g.get_id_from_name("TTS") is not None:
-            tts_node = self.g.get_node("TTS")
-            id_tts = self.g.get_id_from_name("TTS")
+        # Se lee el nodo del grafo
+        tts_node = self.g.get_node("TTS")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo to_say")
+        self.last_text = tts_node.attrs["to_say"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_text == tts_node.attrs["to_say"].value:
+            print("Valores iniciales cargados correctamente")
         else:
-            tts_node, id_tts = self.create_node("tts", "TTS")
-
-        # Creación del edge
-        self.create_edge(id_ebo, id_tts, "has")
-
-        # Modificar atributo intento
-        self.last_text = "¡Hola mundo!"
-        tts_node.attrs["to_say"] = Attribute(self.last_text, self.agent_id)
-        print("Atributo modificado")
-        self.g.update_node(tts_node)
-        print("Nodo actualizado")
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
 
     def __del__(self):
         """Destructor"""
@@ -174,80 +144,36 @@ class SpecificWorker(GenericWorker):
         #	print("Error reading config params")
         return True
 
-    # Crea al nodo pasándole strings que contienen el tipo del nodo y el nombre que aparecerá en el DSR;
-    # y devuelve el nodo y su id (hay que almacenarlos: xxx_node, id_xxx = self.create_node("tipo", "nombre"))
-    def create_node(self, type, name):
-        """
-        Takes in an instance of `Node`, creates a new node in the graph with the
-        given `agent_id`, `type`, and `name`, and returns both the newly created
-        node and its ID.
-
-        Args:
-            type (str): type of the newly created node in the graph.
-            name (str): name of the new node that is being created in the graph.
-
-        Returns:
-            instance of `Node: a pair of nodes, where the first node represents
-            the newly created node and the second node represents the ID of the
-            newly created node.
-            
-            		- `new_node`: The created node object with its attributes (agent ID,
-            type, and name).
-            		- `id_node`: The ID of the newly created node in the graph.
-
-        """
-        new_node = Node(agent_id=self.agent_id, type=type, name=name)
-        id_node = self.g.insert_node(new_node)
-        print("Nodo ", name, " creado con ID: ", id_node)
-        return new_node, id_node
-
-    # Crea un edge introduciéndole origen, destino y tipo:
-    # Ej: self.create_edge(x_id, y_id, "tipo")
-    def create_edge(self, fr, to, type):
-        """
-        Inserts or assigns an edge into the graph based on the provided parameters.
-
-        Args:
-            fr (str): origin of the edge being created in the Graph.
-            to (str): 2nd vertex of the new edge that is being created in the graph.
-            type (str): type of edge being created, which can be one of the
-                predefined edge types or a custom type defined by the user.
-
-        """
-        new_edge = Edge(to, fr, type, self.agent_id)
-        cr_edge = self.g.insert_or_assign_edge(new_edge)
-        print("Creado edge tipo ", type, " de ", fr, " a ", to)
 
     # Función que contiene y ejecuta todo lo necesario para generar el audio TTS a partir del texto y reproducirlo. Con la nueva voz del TTS.
     def new_tts(self, text):
         # Función para dividir el texto en partes más pequeñas
         """
-        1) splits the input text into parts, 2) generates audio files for each
-        part using a TTS model, and 3) adds the audio files to a queue for reproduction.
+        Generates and stores audio files for each part of a given text, while also
+        starting threads for audio generation and playback. It also modifies an
+        attribute in an ASR node to start listening after finishing speech.
 
         Args:
-            text (str): text to be split into parts for audio generation.
+            text (str): text to be divided into parts for speech synthesis, and
+                it is used by the `split_text()` function to determine the size
+                of each part based on rules provided in the input.
 
         Returns:
-            list: a list of audio files generated from the given text, ready to
-            be played.
+            list: a list of audio files with the text parts of the input text.
 
         """
         def split_text(text):
             """
-            Splits a given text into multiple parts based on specified rules,
-            including finding the first dot, exclamation point, or question mark
-            after 75 characters for the first and second part, and after 150
-            characters for subsequent parts. It appends each part to a list and
-            moves the starting position to the next point of division.
+            Partitions a given text into substrings separated by dots, exclamation
+            points, or question marks, based on the number of characters in each
+            part.
 
             Args:
-                text (str): sequence of characters that the function will analyze
-                    and partition into parts based on predetermined rules.
+                text (str): text that is being divided into parts.
 
             Returns:
-                list: a list of substrings separated by dots, exclamation points,
-                or questions marks.
+                list: a list of substrings extracted from a given text based on
+                specified rules.
 
             """
             parts = []
@@ -277,30 +203,30 @@ class SpecificWorker(GenericWorker):
         # Función para generar audio y agregar las rutas de salida a la cola
         def generate_audio(queue):
             """
-            Uses a list of text parts (`text_parts`) and a list of output paths
-            (`output_paths`) to generate audio files using a TTS model and store
-            them in the given output paths. It also marks the end of the queue
-            when the last output path is processed.
+            Takes a list of text parts (`text_parts`) and uses a TTS model
+            (`self.model`) to generate audio files for each part. It then queues
+            the generated audio files for further processing.
 
             Args:
-                queue (`queue.py`.): sequence of file paths where the generated
-                    audio will be saved.
+                queue (`object`.): pipeline for the output of the TTS generation,
+                    where the function puts the generated audio files into it once
+                    they are synthesized and processed.
                     
-                    		- ` queue`: A `queue.Queue` object that holds audio files
-                    generated by the TTS system.
-                    		- `put()` method: This method adds an item to the end of the
-                    queue. In this case, it adds the output path of the audio file
-                    generated by the model.
-                    		- `get()` method: This method removes and returns an item
-                    from the front of the queue. It is used to process the next
-                    item in the queue.
-                    		- `empty()` method: This method checks whether the queue is
-                    empty or not. If the queue is empty, the `generate_audio`
-                    function will exit.
-                    		- Other attributes/properties: The `queue` object may have
-                    other attributes and properties that are not explicitly mentioned
-                    in this explanation, such as the maximum size of the queue,
-                    the time to wait before removing an item from the queue, etc.
+                    		- `queue`: A `Queue` object that stores the output paths for
+                    the generated audio.
+                    		- `enqueue()` method: Adds an item to the queue and sets its
+                    lock to prevent additional items from being added while the
+                    function is executing.
+                    		- `put()` method: Puts an item in the queue, which in this
+                    case are the output paths for the generated audio.
+                    		- `put(item)` method: Similar to `put()`, but allows specifying
+                    a specific item to be added to the queue instead of using the
+                    default value.
+                    		- `empty()` method: Checks if the queue is empty.
+                    		- `peek()` method: Retrieves and deletes the front item from
+                    the queue, similar to `dequeue()` but without modifying the
+                    lock status.
+                    		- `size()` method: Returns the number of items in the queue.
 
             """
             for i, part in enumerate(text_parts):
@@ -313,26 +239,21 @@ class SpecificWorker(GenericWorker):
         # Función para reproducir el audio en orden
         def play_audio(queue):
             """
-            Receives an audio file path from a queue, plays it using the `play`
-            function, and then updates the emotional motor proxy's talking status
-            to false. It also releases the semaphore and marks the task as done
-            in the queue.
+            Plays an audio file using a `queue` and a `semaphore`. It retrieves
+            the next audio file from the queue, plays it using the `emotionalmotor_proxy`,
+            and then releases the semaphore.
 
             Args:
-                queue (`Queuelib.Queue`.): message queue where the function processes
-                    messages to play audio from.
+                queue (` queue`.): Queue of audio files to be processed by the function.
                     
-                    		- `get()` method: Returns the next element in the queue, if
-                    any. If the queue is empty, it raises a `queue.Empty` exception.
-                    		- `is_empty`: A boolean attribute indicating whether the
-                    queue is empty or not.
-                    		- `size`: An integer attribute representing the number of
-                    elements currently stored in the queue.
-                    		- `tasks_done`: An integer attribute representing the number
-                    of tasks that have been completed by the queue's worker thread.
-                    		- `max_task_size`: An optional integer attribute specifying
-                    the maximum size of a task that can be added to the queue, in
-                    bytes.
+                    		- `get()`: This method retrieves the next item from the
+                    queue. The output path is stored in the variable `output_path`.
+                    		- `None`: This value indicates that no more items are available
+                    in the queue and the function has completed.
+                    		- `task_done()`: This method signals to the event loop that
+                    a task has been completed.
+                    		- `release()`: This method releases the semaphore, allowing
+                    it to be reused by other tasks.
 
             """
             while True:
@@ -387,12 +308,12 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Checks if the text queue is empty, if not it removes a message from the
-        queue and performs tts on it and adds it to the end of the queue, then
-        returns True.
+        Determines whether the `text_queue` is empty or not, and if it's not, it
+        retrieves a message from the queue and processes it by calling the `new_tts()`
+        function. If the queue is empty, the function passes silently.
 
         Returns:
-            bool: `True`.
+            int: `True`.
 
         """
         if self.text_queue.empty():
@@ -431,12 +352,16 @@ class SpecificWorker(GenericWorker):
 
     def update_node_att(self, id: int, attribute_names: [str]):
         """
-        Updates the attributes of a node in a graph based on the value of an attribute.
+        Updates the attribute value of a TTS (text-to-speech) node in a text queue
+        based on its previously saved value, and logs an update message to the
+        console using the green font style.
 
         Args:
-            id (int): identifier of the node for which the attributes are being updated.
-            attribute_names ([str]): attribute names of the TTS node to be updated,
-                which are then printed in green using the `console.print()` method.
+            id (int): unique identifier of the node being processed, which is used
+                to update the corresponding attribute value in the queue.
+            attribute_names ([str]): names of the attributes to be printed in green
+                color when an update occurs, using the `console.print()` method
+                inside the `if` block.
 
         """
         tts_node = self.g.get_node("TTS")
@@ -446,6 +371,7 @@ class SpecificWorker(GenericWorker):
             console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
         else:
             pass
+
 
     def update_node(self, id: int, type: str):
         console.print(f"UPDATE NODE: {id} {type}", style='green')
