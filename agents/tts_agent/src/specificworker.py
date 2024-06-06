@@ -70,18 +70,18 @@ charsToAvoid = ["'", '"', '{', '}', '[', '<', '>', '(', ')', '&', '$', '|', '#']
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes an instance of the `SpecificWorker` class, setting properties
-        related to TTS and the graph. It also connects signals for updating node
-        attributes and starting a timer for the `compute` function.
+        Sets up the MeloTTS agent, including initializing the device, model, and
+        speaker IDs; loading node attributes from a graph; connecting signals for
+        updating node attributes and timer events; and setting the emotional motor
+        to express joy.
 
         Args:
-            proxy_map (dict): mapping of agent ID to a proxy node in the DSRGraph,
-                which is used to connect the agent's signals to the appropriate
-                nodes in the graph.
-            startup_check (bool): initialization of additional functionality during
-                the launching of the agent and can include tasks such as computing
-                node attributes or checking connections to external services before
-                beginning the main loop.
+            proxy_map (dict): mapping between the agent's internal state and the
+                graph signals, allowing the agent to interact with the graph
+                environment through the proxy functions.
+            startup_check (bool): execution of an additional check at the beginning
+                of the function, which can be used to perform any additional actions
+                or checks necessary for the specific deployment of the agent.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -99,6 +99,25 @@ class SpecificWorker(GenericWorker):
         # YOU MUST SET AN UNIQUE ID FOR THIS AGENT IN YOUR DEPLOYMENT. "_CHANGE_THIS_ID_" for a valid unique integer
         self.agent_id = 5
         self.g = DSRGraph(0, "pythonAgent", self.agent_id)
+
+
+        # Se lee el nodo del grafo
+        tts_node = self.g.get_node("TTS")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo to_say")
+        self.last_text = tts_node.attrs["to_say"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_text == tts_node.attrs["to_say"].value:
+            print("Valores iniciales cargados correctamente")
+        else:
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
+
+        llm_node = self.g.get_node("LLM")
+        print("Cargando valores iniciales del atributo out_llama")
+        self.last_out = llm_node.attrs["out_llama"].value
 
         try:
             signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
@@ -119,19 +138,6 @@ class SpecificWorker(GenericWorker):
 
         self.emotionalmotor_proxy.expressJoy() # Pone a EBO contento al lanzar el agente, como de momento solo vamos a meter ASR, TTS y LLama que tenga buena cara.
 
-        # Se lee el nodo del grafo
-        tts_node = self.g.get_node("TTS")
-
-        # Se guardan los valores iniciales
-        print("Cargando valores iniciales del atributo to_say")
-        self.last_text = tts_node.attrs["to_say"].value
-
-        # Comprobación de esta carga de valores iniciales del grafo
-        if self.last_text == tts_node.attrs["to_say"].value:
-            print("Valores iniciales cargados correctamente")
-        else:
-            print(
-                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
 
     def __del__(self):
         """Destructor"""
@@ -149,31 +155,37 @@ class SpecificWorker(GenericWorker):
     def new_tts(self, text):
         # Función para dividir el texto en partes más pequeñas
         """
-        Generates and stores audio files for each part of a given text, while also
-        starting threads for audio generation and playback. It also modifies an
-        attribute in an ASR node to start listening after finishing speech.
+        Takes a string `text` and generates audio files from it using an TTS model,
+        storing the paths of the generated files in a queue and synchronizing the
+        generation and reproduction threads using semaphores.
 
         Args:
-            text (str): text to be divided into parts for speech synthesis, and
-                it is used by the `split_text()` function to determine the size
-                of each part based on rules provided in the input.
+            text (str): text to be divided into parts, which is then used as input
+                for the other functions in the code.
 
         Returns:
-            list: a list of audio files with the text parts of the input text.
+            list: a list of audio files generated from the given text using an TTS
+            model, and a semaphore to synchronize generation and playback.
 
         """
         def split_text(text):
             """
-            Partitions a given text into substrings separated by dots, exclamation
-            points, or question marks, based on the number of characters in each
-            part.
+            Takes a string `text`, and splits it into a list of substrings (parts)
+            based on certain rules. The function first determines the number of
+            parts based on the length of the input string, then iterates over each
+            part, starting from the beginning of the string, until reaching a
+            specified point (based on the length of the string or a particular
+            character). Each part is obtained by stripping whitespace and any
+            non-separating characters from the start of the substring to the end
+            of the input string. The parts are returned as a list.
 
             Args:
-                text (str): text that is being divided into parts.
+                text (str): code or text for which high-quality documentation is
+                    being generated.
 
             Returns:
                 list: a list of substrings extracted from a given text based on
-                specified rules.
+                predefined rules.
 
             """
             parts = []
@@ -203,30 +215,18 @@ class SpecificWorker(GenericWorker):
         # Función para generar audio y agregar las rutas de salida a la cola
         def generate_audio(queue):
             """
-            Takes a list of text parts (`text_parts`) and uses a TTS model
-            (`self.model`) to generate audio files for each part. It then queues
-            the generated audio files for further processing.
+            Processes text parts and generates audio files for each part, using a
+            TTS (text-to-speech) model and storing them in a queue.
 
             Args:
-                queue (`object`.): pipeline for the output of the TTS generation,
-                    where the function puts the generated audio files into it once
-                    they are synthesized and processed.
+                queue (`object`.): Python threading.Queue object that is used to
+                    store the output files generated by the TTS engine and marks
+                    the end of the queue when None is passed to it.
                     
-                    		- `queue`: A `Queue` object that stores the output paths for
-                    the generated audio.
-                    		- `enqueue()` method: Adds an item to the queue and sets its
-                    lock to prevent additional items from being added while the
-                    function is executing.
-                    		- `put()` method: Puts an item in the queue, which in this
-                    case are the output paths for the generated audio.
-                    		- `put(item)` method: Similar to `put()`, but allows specifying
-                    a specific item to be added to the queue instead of using the
-                    default value.
-                    		- `empty()` method: Checks if the queue is empty.
-                    		- `peek()` method: Retrieves and deletes the front item from
-                    the queue, similar to `dequeue()` but without modifying the
-                    lock status.
-                    		- `size()` method: Returns the number of items in the queue.
+                    		- `queue`: A Python `queue` object used for communication
+                    between worker threads. It has methods to put and get items
+                    from the queue, as well as a `put` method to add an item to
+                    the end of the queue without waiting for it to be processed.
 
             """
             for i, part in enumerate(text_parts):
@@ -239,21 +239,22 @@ class SpecificWorker(GenericWorker):
         # Función para reproducir el audio en orden
         def play_audio(queue):
             """
-            Plays an audio file using a `queue` and a `semaphore`. It retrieves
-            the next audio file from the queue, plays it using the `emotionalmotor_proxy`,
-            and then releases the semaphore.
+            Takes a queued path to an audio file, plays it using a `AudioSegment`
+            object and a `EmotionalMotor` proxy, and then removes the audio file
+            from the queue.
 
             Args:
-                queue (` queue`.): Queue of audio files to be processed by the function.
+                queue (`Queue`.): queue that is used to store the path of the audio
+                    file that the `play()` function will play when the `talking()`
+                    method is called.
                     
-                    		- `get()`: This method retrieves the next item from the
-                    queue. The output path is stored in the variable `output_path`.
-                    		- `None`: This value indicates that no more items are available
-                    in the queue and the function has completed.
-                    		- `task_done()`: This method signals to the event loop that
-                    a task has been completed.
-                    		- `release()`: This method releases the semaphore, allowing
-                    it to be reused by other tasks.
+                    		- `get()`: Returns the next element from the queue or `None`
+                    if the queue is empty.
+                    		- `is None`: Indicates whether the queue is empty or not.
+                    		- `task_done()`: Indicates that a task has been completed
+                    successfully and the semaphore should be released.
+                    		- `release()`: Releases the semaphore, allowing other tasks
+                    to access the shared resource.
 
             """
             while True:
@@ -308,12 +309,12 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Determines whether the `text_queue` is empty or not, and if it's not, it
-        retrieves a message from the queue and processes it by calling the `new_tts()`
-        function. If the queue is empty, the function passes silently.
+        Checks if the text queue is empty, if it is not, it takes a text from the
+        queue and uses the `new_tts` method to generate a new TTS output. It then
+        returns `True`.
 
         Returns:
-            int: `True`.
+            bool: `True`.
 
         """
         if self.text_queue.empty():
@@ -345,25 +346,61 @@ class SpecificWorker(GenericWorker):
     # self.emotionalmotor_proxy.pupposition(...)
     # self.emotionalmotor_proxy.talking(...)
 
+    def actualizar_to_say(self, nuevo):
+        """
+        Updates the attribute `to_say` of a TTS node based on an input `nuevo` and
+        the agent ID, then prints "Atributo modificado" and updates the node in
+        the graph.
 
+        Args:
+            nuevo (`Attribute`.): new value to be assigned to the `to_say` attribute
+                of the TTS node.
+                
+                		- `nuevo`: A serialized Python object with attributes related
+                to the TTS system.
+                
+                	Properties of `nuevo`:
+                
+                		- `self.agent_id`: An attribute representing the unique identifier
+                of the agent's conversation partner.
+
+        Returns:
+            bool: a message indicating that an attribute has been modified in the
+            TTS node.
+
+        """
+        tts_node = self.g.get_node("TTS")
+        if tts_node is None:
+            print("No TTS")
+            return False
+        else:
+            tts_node.attrs["to_say"] = Attribute(nuevo, self.agent_id)
+            print("Atributo modificado")
+            self.g.update_node(tts_node)
 
     # =============== DSR SLOTS  ================
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
         """
-        Updates the attribute value of a TTS (text-to-speech) node in a text queue
-        based on its previously saved value, and logs an update message to the
-        console using the green font style.
+        Updates the attributes of nodes with certain tags and puts new text into
+        a queue for speech synthesis.
 
         Args:
-            id (int): unique identifier of the node being processed, which is used
-                to update the corresponding attribute value in the queue.
-            attribute_names ([str]): names of the attributes to be printed in green
-                color when an update occurs, using the `console.print()` method
-                inside the `if` block.
+            id (int): node object being processed, allowing the function to operate
+                on the appropriate node within the graph structure.
+            attribute_names ([str]): attribute names of the node that is being
+                processed, and it is used to display them in green color on the
+                console for update purposes.
 
         """
+        llm_node = self.g.get_node("LLM")
+        if llm_node.attrs["out_llama"].value != self.last_out:
+            self.last_out = llm_node.attrs["out_llama"].value
+            self.actualizar_to_say(self.last_out)
+        else:
+            pass
+
         tts_node = self.g.get_node("TTS")
         if tts_node.attrs["to_say"].value != self.last_text:
             self.text_queue.put(tts_node.attrs["to_say"].value)
