@@ -85,6 +85,25 @@ class SpecificWorker(GenericWorker):
         self.agent_id = 5
         self.g = DSRGraph(0, "pythonAgent", self.agent_id)
 
+
+        # Se lee el nodo del grafo
+        tts_node = self.g.get_node("TTS")
+
+        # Se guardan los valores iniciales
+        print("Cargando valores iniciales del atributo to_say")
+        self.last_text = tts_node.attrs["to_say"].value
+
+        # Comprobación de esta carga de valores iniciales del grafo
+        if self.last_text == tts_node.attrs["to_say"].value:
+            print("Valores iniciales cargados correctamente")
+        else:
+            print(
+                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
+
+        llm_node = self.g.get_node("LLM")
+        print("Cargando valores iniciales del atributo out_llama")
+        self.last_out = llm_node.attrs["out_llama"].value
+
         try:
             signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
             #signals.connect(self.g, signals.UPDATE_NODE, self.update_node)
@@ -104,19 +123,6 @@ class SpecificWorker(GenericWorker):
 
         self.emotionalmotor_proxy.expressJoy() # Pone a EBO contento al lanzar el agente, como de momento solo vamos a meter ASR, TTS y LLama que tenga buena cara.
 
-        # Se lee el nodo del grafo
-        tts_node = self.g.get_node("TTS")
-
-        # Se guardan los valores iniciales
-        print("Cargando valores iniciales del atributo to_say")
-        self.last_text = tts_node.attrs["to_say"].value
-
-        # Comprobación de esta carga de valores iniciales del grafo
-        if self.last_text == tts_node.attrs["to_say"].value:
-            print("Valores iniciales cargados correctamente")
-        else:
-            print(
-                "Valores iniciales error al cargar (Puede afectar al inicio del programa, pero no es un problema grave)")
 
     def __del__(self):
         """Destructor"""
@@ -249,12 +255,27 @@ class SpecificWorker(GenericWorker):
     # self.emotionalmotor_proxy.pupposition(...)
     # self.emotionalmotor_proxy.talking(...)
 
-
+    def actualizar_to_say(self, nuevo):
+        tts_node = self.g.get_node("TTS")
+        if tts_node is None:
+            print("No TTS")
+            return False
+        else:
+            tts_node.attrs["to_say"] = Attribute(nuevo, self.agent_id)
+            print("Atributo modificado")
+            self.g.update_node(tts_node)
 
     # =============== DSR SLOTS  ================
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
+        llm_node = self.g.get_node("LLM")
+        if llm_node.attrs["out_llama"].value != self.last_out:
+            self.last_out = llm_node.attrs["out_llama"].value
+            self.actualizar_to_say(self.last_out)
+        else:
+            pass
+
         tts_node = self.g.get_node("TTS")
         if tts_node.attrs["to_say"].value != self.last_text:
             self.text_queue.put(tts_node.attrs["to_say"].value)

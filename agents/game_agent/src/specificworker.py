@@ -25,6 +25,10 @@ from rich.console import Console
 from genericworker import *
 import interfaces as ifaces
 
+import os
+import time
+
+
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
 
@@ -43,28 +47,11 @@ class SpecificWorker(GenericWorker):
         self.Period = 2000
 
         # YOU MUST SET AN UNIQUE ID FOR THIS AGENT IN YOUR DEPLOYMENT. "_CHANGE_THIS_ID_" for a valid unique integer
-        self.agent_id = 11
+        self.agent_id = 9
         self.g = DSRGraph(0, "pythonAgent", self.agent_id)
 
-        # Se lee el nodo del grafo
-        llm_node = self.g.get_node("LLM")
-
-        # Se guardan los valores iniciales
-        print("Cargando valores iniciales del atributo escuchando")
-        self.last_in = llm_node.attrs["in_llama"].value
-        self.last_out = llm_node.attrs["out_llama"].value
-
-        # Comprobación de esta carga de valores iniciales del grafo
-        if self.last_in == llm_node.attrs["in_llama"].value and self.last_out == llm_node.attrs["out_llama"].value:
-            print("Valores iniciales cargados correctamente")
-        else:
-            print("Error al cargar los valores iniciales")
-
-        asr_node = self.g.get_node("ASR")
-        self.last_texto = asr_node.attrs["texto"].value
-
         try:
-            signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
+            #signals.connect(self.g, signals.UPDATE_NODE_ATTR, self.update_node_att)
             #signals.connect(self.g, signals.UPDATE_NODE, self.update_node)
             #signals.connect(self.g, signals.DELETE_NODE, self.delete_node)
             #signals.connect(self.g, signals.UPDATE_EDGE, self.update_edge)
@@ -79,8 +66,8 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
-
-
+        
+        self.aux=""
 
     def __del__(self):
         """Destructor"""
@@ -96,7 +83,28 @@ class SpecificWorker(GenericWorker):
 
     @QtCore.Slot()
     def compute(self):
-        #print('SpecificWorker.compute...')
+        while True:
+            self.mostrar_menu()
+            opcion = input("Ingrese el número del juego que desea jugar: ").strip()
+            
+            if opcion == "1":
+                if self.confirmar_seleccion("Secuencias de AVDB"):
+                    self.aux=""
+                    self.juego1()
+                    
+            elif opcion == "2":
+                if self.confirmar_seleccion("El verdadero o falso de las AVDB"):
+                    self.aux=""
+                    self.juego2()
+                    
+            elif opcion == "3":
+                if self.confirmar_seleccion("La compra"):
+                    self.aux=""
+                    self.juego3()
+                    
+            else:
+                self.clear_screen()
+                self.aux = "Opción no válida. Por favor, intente de nuevo."
         # computeCODE
         # try:
         #   self.differentialrobot_proxy.setSpeedBase(100, 0)
@@ -115,77 +123,92 @@ class SpecificWorker(GenericWorker):
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
+    
+    
+    def clear_screen(self):
+        os.system('clear')
+        
+    def cerrar_juego(self):
+        print("Cerrando el juego, por favor, espere")
+        time.sleep(5)
+        self.clear_screen()
 
 
-    ######################
-    # From the RoboCompLLM you can call this methods:
-    # self.llm_proxy.generateResponse(...)
-
-    # Actualiza llama_out con la respuesta generada
-    def actualizar_out(self,respuesta_gen):
+    def actualizar_prompt(self, prompt):
         llm_node = self.g.get_node("LLM")
         if llm_node is None:
             print("No LLM")
             return False
         else:
-            llm_node.attrs["out_llama"] = Attribute(respuesta_gen, self.agent_id)
+            llm_node.attrs["in_llama"] = Attribute(prompt, self.agent_id)
             print("Atributo modificado")
             self.g.update_node(llm_node)
+        
 
-    # Pone vacío llama_in; esto es por si acaso se repite una respuesta del jugador (Dos veces de seguido Verdadero por ejemplo)
-    def borrar_in(self):
-        llm_node = self.g.get_node("LLM")
-        if llm_node is None:
-            print("No LLM")
-            return False
-        else:
-            llm_node.attrs["in_llama"] = Attribute("", self.agent_id)
-            print("Atributo modificado")
-            self.g.update_node(llm_node)
+    def juego1(self):
+        self.clear_screen()
+        print("Bienvenido al Juego: Secuencias de AVDB")
+        
+        prompt = "Aquí iría el prompt del juego"
+        self.actualizar_prompt(prompt)
+        
+        input("Juego en curso, pulsa Enter para cerrarlo y volver al menú...")
+        self.clear_screen()
+        self.cerrar_juego()
+        
 
-    def actualizar_in(self,nuevo):
-        llm_node = self.g.get_node("LLM")
-        if llm_node is None:
-            print("No LLM")
+    def juego2(self):
+        self.clear_screen()
+        print("Bienvenido al Juego: El verdadero o falso de las AVDB")
+        
+        prompt = "Aquí iría el prompt del juego"
+        self.actualizar_prompt(prompt)
+        
+        input("Presiona Enter para volver al menú...")
+        self.clear_screen()
+        self.cerrar_juego()
+
+    def juego3(self):
+        self.clear_screen()
+        print("Bienvenido al Juego: La compra")
+        
+        prompt = "Aquí iría el prompt del juego"
+        self.actualizar_prompt(prompt)
+        
+        input("Presiona Enter para volver al menú...")
+        self.clear_screen()
+        self.cerrar_juego()
+
+
+    def confirmar_seleccion(self, juego):
+        self.clear_screen()
+        print(f"Has elegido {juego}.")
+        decision = input("Pulsa Enter para iniciar o escribe 'salir' para volver al menú: ").strip().lower()
+        if decision == 'salir':
             return False
-        else:
-            llm_node.attrs["in_llama"] = Attribute(nuevo, self.agent_id)
-            print("Atributo modificado")
-            self.g.update_node(llm_node)
+        return True
+
+    def mostrar_menu(self):
+        self.clear_screen()
+        print(self.aux)
+        print("Seleccione un juego:")
+        print("1. Secuencias de AVDB")
+        print("2. El verdadero o falso de las AVDB")
+        print("3. La compra")
+
+
+
+
 
 
     # =============== DSR SLOTS  ================
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
-        asr_node = self.g.get_node("ASR")
-        if asr_node.attrs["texto"].value != self.last_texto:
-            self.last_texto = asr_node.attrs["texto"].value
-            self.actualizar_in(self.last_texto)
-        else:
-            pass
-
-        llm_node = self.g.get_node("LLM")
-        if llm_node.attrs["in_llama"].value != self.last_in:
-            if llm_node.attrs["in_llama"].value != "":
-                self.last_in = llm_node.attrs["in_llama"].value
-                #respuesta = "Funciona"# Incluir aquí función para generar respuesta, que lo almacene en una variable
-                #self.actualizar_out(respuesta)
-                self.borrar_in()
-            else:
-                pass
-
-        else:
-            pass
-        #console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
+        console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
 
     def update_node(self, id: int, type: str):
-        asr_node = self.g.get_node("ASR")
-        if asr_node.attrs["texto"].value != self.last_texto:
-            self.last_out = llm_node.attrs["out_llama"].value
-            self.actualizar_to_say(self.last_out)
-        else:
-            pass
+        console.print(f"UPDATE NODE: {id} {type}", style='green')
 
     def delete_node(self, id: int):
         console.print(f"DELETE NODE:: {id} ", style='green')
