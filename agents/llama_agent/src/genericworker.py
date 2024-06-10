@@ -40,18 +40,22 @@ class GenericWorker(QtCore.QObject):
 
     def __init__(self, mprx):
         """
-        Initializes an instance of `GenericWorker`. It creates a `LLMProxy`, a
-        `QMutex` for synchronization, and sets the period of timer to 30 seconds.
+        Initializes an instance of `GenericWorker`. It sets up a mutex for thread-safe
+        access, creates a timer with a 30-second interval, and defines an LLM proxy
+        object.
 
         Args:
-            mprx ("LLMProxy" QObject object.): LLMProxy object, which provides a
-                connection to the Linux Little Endian Machine (LLM) for execution
-                of tasks.
+            mprx (object/instance of the class `QMutex`.): LLMProxy object, which
+                provides an interface to the Language Model for this worker instance.
                 
-                		- `LLMProxy`: This is an attribute of `mprx` representing the
-                LLMProxy object, which provides access to the LLM framework.
-                		- ` Period`: An integer attribute representing the time interval
-                (in seconds) between successive checks for dead clients in the LLM.
+                		- `LLMProxy`: A Qt object that serves as an abstraction layer
+                for interacting with the Lightning Layer Manager (LLM).
+                		- `mutex`: A recursive mutex used to protect access to internal
+                data structures.
+                		- `Period`: The interval between timer ticks, set to 30 in this
+                example.
+                		- `timer`: A Qt timer that is used to schedule periodic execution
+                of the worker's callback function.
 
         """
         super(GenericWorker, self).__init__()
@@ -73,12 +77,12 @@ class GenericWorker(QtCore.QObject):
     @QtCore.Slot(int)
     def setPeriod(self, p):
         """
-        Sets the period of a timer to a given value `p` and updates the internal
-        state of the class `Timer`.
+        Sets a new period duration, updates the instance variable `Period`, and
+        starts a timer to execute the code in that period.
 
         Args:
-            p (int): period of the timer, which is set as the value of the `Period`
-                attribute of the `self` object.
+            p (int): period of time after which the timer should start running,
+                and it is used to set the timer's interval.
 
         """
         print("Period changed", p)

@@ -40,18 +40,18 @@ class GenericWorker(QtCore.QObject):
 
     def __init__(self, mprx):
         """
-        Sets up the instance variables `mutex` and `timer`, establishing a recursive
-        mutex and creating a timer with a 30-second period, respectively.
+        Sets up a recursor mutex and a timer with a period of 30 seconds for use
+        by the `GenericWorker` class.
 
         Args:
-            mprx (`QtCore.QMutex`.): mutex used to protect access to the object's
-                state during execution of its method calls.
+            mprx (`QtCore.QMutex`.): QMutex that is used to synchronize access to
+                the instance's internal state.
                 
-                		- `mutex`: A `QMutex` object used to synchronize access to the
-                protected resources. It has the `Recursive` flag set, indicating
-                that it can be recursively acquired.
+                		- `mutex`: A `QMutex` object for protecting the access to the
+                worker's state. It is set to `Recursive`, indicating that it can
+                be locked multiple times without causing any issues.
                 		- `Period`: An integer value representing the interval between
-                consecutive calls to the timer's function.
+                successive runs of the worker's task, set to 30 seconds in this case.
 
         """
         super(GenericWorker, self).__init__()
@@ -72,12 +72,13 @@ class GenericWorker(QtCore.QObject):
     @QtCore.Slot(int)
     def setPeriod(self, p):
         """
-        Changes the period value, stores it in a variable, and starts a timer with
-        the new period using the `start` method.
+        Updates the `Period` attribute and starts a timer with the new period using
+        the `timer.start()` method.
 
         Args:
-            p (float): duration of the interval to be timed, and it is assigned
-                to the instance attribute ` Period `.
+            p (float): duration of the interval, and it is used to set the value
+                of `self.Period`, which is then passed to the `timer.start()`
+                method to schedule the interval's execution.
 
         """
         print("Period changed", p)

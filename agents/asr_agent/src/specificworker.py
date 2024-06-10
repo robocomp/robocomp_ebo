@@ -109,29 +109,19 @@ BUFFER_LENGTH = int(RESPEAKER_RATE * BUFFER_DURATION)
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes an instance of `DSRGraph` with a unique agent ID and connects
-        signals for updating node attributes and timed computations.
+        Sets up a worker's internal state, connecting signal handlers for graph
+        updates and starting a timer for periodic computation. It also loads initial
+        node values and performs an initial check for incorrect loading of those
+        values.
 
         Args:
-            proxy_map (dict): mapping of nodes and edges in the graph to their
-                corresponding proxies, allowing the agent to interact with the
-                graph more efficiently.
-            startup_check (`RuntimeError`.): execution of a specific check or
-                action during the startup phase of the function.
-                
-                		- `signals`: This is an instance of the `Signals` class, which
-                provides methods for connecting signals to the graph agent's update
-                and event handlers.
-                		- `Period`: This is the time period after which the agent will
-                check if any updates are available.
-                		- `agent_id`: This is a unique integer ID assigned to the agent
-                in the deployment.
-                		- `g`: This is an instance of the `DSRGraph` class, which
-                represents the graph that the agent operates on.
-                		- `startup_check`: This is a boolean value indicating whether
-                the agent should perform a startup check. If `startup_check` is
-                `True`, then the agent will call the `startup_check()` method;
-                otherwise, it will not.
+            proxy_map (dict): Python Agent that is being initialized, and it is
+                used to store references to its various attributes and methods for
+                easier access within the function.
+            startup_check (bool): whether to call the `startup_check()` method
+                after connecting the signals and before starting the timer, which
+                checks if the graph is properly initialized and raises an error
+                if it's not.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -202,8 +192,7 @@ class SpecificWorker(GenericWorker):
     #
     def ASR_getLastPhrase(self):
         """
-        Takes no arguments and returns a string value, which is the last phrase
-        from a given input of text.
+        Is intended to take a string and return its last phrase.
 
         Returns:
             str: a string representation of the last spoken phrase.
@@ -220,15 +209,14 @@ class SpecificWorker(GenericWorker):
     ############################
     def generate_wav(self, file_name, record):
         """
-        Modifies a file to contain an audio signal with a specified number of
-        channels, sample width, and framerate. It reads a sequence of bytes from
-        the function argument and writes them to the file as audio data.
+        Modifies the wave file object `wf` by setting its channels, sample width,
+        and framerate to the values specified for RESPEAKER format, then writes a
+        list of audio samples to it.
 
         Args:
-            file_name (str): file name that contains audio data to be converted
-                and written in a new format.
-            record (list): 2D audio data as a list of signed 16-bit integer values,
-                with each element representing one frame of the audio data.
+            file_name (str): file to be written, and its value determines the name
+                of the output file created by the `wave.open()` function.
+            record (str): audio data to be written to the wave file.
 
         """
         with wave.open(file_name, 'wb') as wf:
@@ -243,13 +231,13 @@ class SpecificWorker(GenericWorker):
 
     def transcript(self, frame):
         """
-        Generates high-quality documentation for code by calling a whisper function,
-        writing the output to a file, and appending the input file contents to a
-        user response file.
+        Generates high-quality documentation for given code, writing output to a
+        file named after the input frame and appending a response file containing
+        a recording command.
 
         Args:
-            frame (int): frame number to be generated as a wave file, and is passed
-                to the `self.call_whisper()` method for further processing.
+            frame (int): 2D image frame that is to be processed and generated into
+                an audio file.
 
         """
         self.generate_wav(OUTPUT_FILENAME, frame)
@@ -259,8 +247,8 @@ class SpecificWorker(GenericWorker):
 
     def manage_transcription(self):
         """
-        Clears the record queue before finishing by consuming all frames in the
-        queue and transcribing each one using the `transcript()` method.
+        Clears the transcription queue when finished and removes frames from the
+        queue until it is empty.
 
         """
         while not self.silence_detected.is_set():
@@ -275,8 +263,7 @@ class SpecificWorker(GenericWorker):
 
     def terminate(self):
         """
-        Stops the audio streaming process, releases any associated resources, and
-        clears the object reference.
+        Stops and closes a streaming process, effectively ending its execution.
 
         """
         stream.stop_stream()
@@ -289,17 +276,18 @@ class SpecificWorker(GenericWorker):
 
     def ASR_listenMicro(self, timeout):
         """
-        Performs real-time audio listening and speech recognition, detecting voice
-        and pauses, enqueuing recordings for transcription, and providing a response
-        to the user based on their spoken input.
+        Listen for voice input and detect silences and pauses, enqueuing audio
+        fragments for transcription when a pause is detected. It also checks for
+        user responses and updates the node with the result of the listening process.
 
         Args:
-            timeout (list): duration of time the function will listen to the user
-                before interrupting and ending the program, and it is used to
-                determine when to stop listening and return a response.
+            timeout (float): duration of time the program should run before a
+                "silence" condition is detected and the transcription process is
+                finished, triggering the return of the user response.
 
         Returns:
-            str: a transcribed audio response from a user.
+            str: a string containing the audio input and user response, or an error
+            message if the user didn't respond.
 
         """
         user_response = str()
@@ -387,20 +375,27 @@ class SpecificWorker(GenericWorker):
 
     def hablar_escuchado(self,escuchado):
         """
-        Modifies an TTS node's "to_say" attribute with a given value, then updates
-        the node in the graph.
+        Modifies an attribute on a TTS node, `to_say`, with a new value specified
+        by the `escuchado` variable and the `agent_id`.
 
         Args:
-            escuchado (Attribute.): attribute value that is being modified for the
-                TTS node.
+            escuchado (Attribute object.): audio output of the TTS node.
                 
-                		- `self.agent_id`: The identifier of the agent that generated
-                the audio data.
-                		- `escuchado`: The deserialized audio data.
+                		- `self.agent_id`: A string attribute representing the agent ID.
+                
+                	Therefore, when the function is called with the argument `
+                escuchado`, it will modify the `to_say` attribute of the TTS node
+                with the value of `escuchado`. The function also updates the TTS
+                node in the graph using the `update_node()` method.
 
         Returns:
-            bool: a statement indicating whether TTS is available or not, followed
-            by an update of the TTS node's attribute with the given text.
+            Attribute` object: a modified TTS node with an updated `to_say` attribute.
+            
+            		- `tts_node`: The node representing the TTS functionality in the graph.
+            		- `escritor`: The attribute containing the text to be spoken, which
+            is assigned with the `Attribute` class and has the value of the
+            `escuchado` variable.
+            		- `self.agent_id`: The ID of the agent that the function belongs to.
 
         """
         tts_node = self.g.get_node("TTS")
@@ -427,15 +422,14 @@ class SpecificWorker(GenericWorker):
 
     def update_node_att(self, id: int, attribute_names: [str]):
         """
-        Updates the state of a specific node in a graph based on an attribute's
-        value, and performs actions depending on whether the node is listening or
-        not.
+        Updates an audio input node's attribute "escuchando" based on its previous
+        state, and performs an action based on the new state.
 
         Args:
-            id (int): identifier of the node whose attributes are being checked
-                and updated in the function.
-            attribute_names ([str]): names of the attributes to be printed in green
-                color in the console for updates on the node's attributes.
+            id (int): ID of the node to check the attribute value for.
+            attribute_names ([str]): names of the attributes that are being monitored
+                for changes in the specified node, and is used to print updates
+                to these attributes in green text using the `console.print()` method.
 
         """
         asr_node = self.g.get_node("ASR")

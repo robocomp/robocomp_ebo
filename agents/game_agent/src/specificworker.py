@@ -44,23 +44,18 @@ from pydsr import *
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Sets up an instance of the `SpecificWorker` class, defining its Period and
-        agent ID, and connecting signals to update various node and edge attributes
-        in a DSRGraph.
+        Sets up an instance of a specific worker class, initializing its fields
+        and connecting it to various signals for updating node attributes, nodes
+        themselves, edges, edge attributes, and implementing startup checks and a
+        timer for periodical computation.
 
         Args:
-            proxy_map (`object`.): map of proxies that will be used to access the
-                DSRGraph, allowing for the creation of agents that can communicate
-                with other agents and nodes in the graph using different proxy addresses.
-                
-                		- ` proxy_map`: This is a dictionary-like object that maps proxy
-                IDs to their corresponding agent ID.
-                		- `Period`: This is an integer representing the time interval
-                between updates in milliseconds.
-                		- `agent_id`: This is an integer that represents the unique ID
-                of the agent. It must be set to a valid unique value in your deployment.
-            startup_check (int): initialization of the agent, where the agent will
-                perform an additional check during the startup phase.
+            proxy_map (dict): mapping of original agent IDs to new unique IDs,
+                which are used for identifying the worker instance within the
+                DSRGraph framework.
+            startup_check (bool): functionality that should be performed when the
+                agent is started, which may include initialization, configuration,
+                or other custom logic.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -104,37 +99,14 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Manages user input, calls specific games depending on the input option and
-        updates the robot's transform values using the InnerModel API.
+        Computes and implements code for various games within a framework. It
+        offers different choices and executes specific activities depending on
+        user input, such as showing a menu, requesting input, confirming selections,
+        and performing various robotics-related tasks using the Python API
+        "python-innermodel" and other libraries.
 
         Returns:
-            True: a boolean value indicating whether the given command was successful.
-            
-            		- `True`: This is the value returned by the `compute` function
-            indicating that the computation was successful.
-            		- `self.mostrar_menu()`: This is a call to a method within the `
-            compute` function that displays a menu for the user to select a game
-            to play.
-            		- `opcion`: This variable is set to the input value selected by the
-            user from the menu displayed earlier.
-            		- `if self.confirmar_seleccion("Secuencias de AVDB")` : This is a
-            conditional statement that checks if the user has confirmed their
-            selection of the "Sequences of AVDB" option. If confirmed, the
-            `self.juego1()` method is called.
-            		- `elif opcion == "2"` : This is an optional conditional statement
-            that checks if the user has selected the "True or False: AVDB" option.
-            If confirmed, the `self.juego2()` method is called.
-            		- ` elif opcion == "3"` : This is an optional conditional statement
-            that checks if the user has selected the "Buy" option. If confirmed,
-            the `self.juego3()` method is called.
-            		- `else` : This statement is executed if none of the above conditions
-            are true. In this case, the `self.clear_screen()` method is called and
-            the variable `self.aux` is set to the message "Invalid selection.
-            Please try again."
-            
-            	Overall, the output returned by the `compute` function reflects the
-            user's input and the subsequent actions that are taken based on that
-            input.
+            bool: a boolean value indicating whether the computation was successful.
 
         """
         while True:
@@ -184,8 +156,7 @@ class SpecificWorker(GenericWorker):
         
     def cerrar_juego(self):
         """
-        Ends the game by displaying a message and sleeping for 5 seconds before
-        clearing the screen.
+        Prints a message and sleeps for 5 seconds before clearing the screen.
 
         """
         print("Cerrando el juego, por favor, espere")
@@ -195,20 +166,22 @@ class SpecificWorker(GenericWorker):
 
     def actualizar_prompt(self, prompt):
         """
-        Modifies the `in_llama` attribute of an LLM node based on a given prompt
-        and agent ID, updates the LLM node in the graph, and prints "Atributo modificado".
+        Updates an LLM node's `in_llama` attribute with the provided prompt and
+        agent ID, and prints a message indicating the modification was made to the
+        LLM node.
 
         Args:
-            prompt ("Attribute" object.): attribute name that is assigned to the
-                LLM node upon modification.
+            prompt (`Attribute`.): attribute value that will be assigned to the
+                `in_llama` attribute of the `LLM` node.
                 
-                		- `prompt`: The input deserialized from JSON.
-                		- `self.agent_id`: A string attribute representing the unique
-                identifier of the agent that modified the attribute.
+                		- `prompt`: A dictionary containing the data to be updated in
+                the LLM node. The key-value pair structure is represented as a
+                serialized JSON object.
+                		- `self.agent_id`: An integer value representing the agent ID
+                of the LLM owner. It is used as an attribute in the updated `llm_node`.
 
         Returns:
-            bool: a message indicating that an attribute has been modified and the
-            LLM node has been updated in the graph.
+            bool: "Atributo modificado".
 
         """
         llm_node = self.g.get_node("LLM")
@@ -223,8 +196,8 @@ class SpecificWorker(GenericWorker):
 
     def juego1(self):
         """
-        Clears the screen, displays a welcome message, updates the prompt, and
-        requests the user to press Enter to close the game and return to the menu.
+        Initializes and displays a simple game with a prompt, and then terminates
+        the game and clears the screen after user input.
 
         """
         self.clear_screen()
@@ -240,8 +213,8 @@ class SpecificWorker(GenericWorker):
 
     def juego2(self):
         """
-        Clears the screen, displays a prompt, updates the prompt, and ends the
-        game with an input prompt.
+        Clears the screen, displays a prompt, updates the prompt, and then closes
+        the game after the user presses enter.
 
         """
         self.clear_screen()
@@ -256,8 +229,8 @@ class SpecificWorker(GenericWorker):
 
     def juego3(self):
         """
-        Displays a welcome message, updates the game prompt, and returns the player
-        to the menu after entering "Enter".
+        Clears the screen, displays a prompt, and prompts the user to press enter
+        to return to the menu.
 
         """
         self.clear_screen()
@@ -273,17 +246,23 @@ class SpecificWorker(GenericWorker):
 
     def confirmar_seleccion(self, juego):
         """
-        Allows the user to confirm their selection and proceed with the game or
-        exit the menu. It takes no arguments and returns a boolean value based on
-        the user's input.
+        Is a simple program that prompts the user to select a game and then checks
+        if they want to continue or exit the menu. If the user chooses to continue,
+        it returns `True`, otherwise it returns `False`.
 
         Args:
-            juego (str): game that the user has chosen, which is used to determine
-                the outcome of the function.
+            juego (str): selected game for which the function will print the chosen
+                game's name and then prompt the user to start or return to the menu.
 
         Returns:
-            int: a boolean value indicating whether the user has confirmed their
-            selection.
+            True` value: `True` when the user presses Enter, and `False` otherwise.
+            
+            	1/ `decision`: This variable stores the user's input, which is either
+            "entrer" for confirming the selection or "salir" for returning to the
+            menu.
+            	2/ `return_value`: The value returned by the function, which indicates
+            whether the selection was confirmed or not. If the user chose "salir",
+            this variable will be `False`, otherwise it will be `True`.
 
         """
         self.clear_screen()
@@ -295,8 +274,7 @@ class SpecificWorker(GenericWorker):
 
     def mostrar_menu(self):
         """
-        Presents a menu with three options to the user: "Secuencias de AVDB", "El
-        verdadero o falso de las AVDB", and "La compra".
+        Prints a menu with options for the user to select a game to play.
 
         """
         self.clear_screen()

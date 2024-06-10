@@ -70,18 +70,16 @@ charsToAvoid = ["'", '"', '{', '}', '[', '<', '>', '(', ')', '&', '$', '|', '#']
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Sets up the MeloTTS agent, including initializing the device, model, and
-        speaker IDs; loading node attributes from a graph; connecting signals for
-        updating node attributes and timer events; and setting the emotional motor
-        to express joy.
+        Initializes an instance of `SpecificWorker` by creating a ProxyMap, setting
+        the device and model for text-to-speech (TTS), and connecting signals to
+        update node attributes and trigger the `compute` function every `Period`.
 
         Args:
-            proxy_map (dict): mapping between the agent's internal state and the
-                graph signals, allowing the agent to interact with the graph
-                environment through the proxy functions.
-            startup_check (bool): execution of an additional check at the beginning
-                of the function, which can be used to perform any additional actions
-                or checks necessary for the specific deployment of the agent.
+            proxy_map (dict): Python agent object's instance attributes as methods
+                for communication with other components through signaling, allowing
+                the agent to interact with its environment and receive updates.
+            startup_check (bool): Whether the function should check if the agent
+                has started or not.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -155,37 +153,31 @@ class SpecificWorker(GenericWorker):
     def new_tts(self, text):
         # Función para dividir el texto en partes más pequeñas
         """
-        Takes a string `text` and generates audio files from it using an TTS model,
-        storing the paths of the generated files in a queue and synchronizing the
-        generation and reproduction threads using semaphores.
+        Takes a string `text` and splits it into parts, generating audio files for
+        each part using an SSML-based TTS engine. The generated audio files are
+        added to a queue, which is processed by another thread that plays the audio
+        in order.
 
         Args:
-            text (str): text to be divided into parts, which is then used as input
-                for the other functions in the code.
+            text (str): text to be divided into parts for speech synthesis.
 
         Returns:
-            list: a list of audio files generated from the given text using an TTS
-            model, and a semaphore to synchronize generation and playback.
+            list: a list of audio file paths for each part of the given text.
 
         """
         def split_text(text):
             """
-            Takes a string `text`, and splits it into a list of substrings (parts)
-            based on certain rules. The function first determines the number of
-            parts based on the length of the input string, then iterates over each
-            part, starting from the beginning of the string, until reaching a
-            specified point (based on the length of the string or a particular
-            character). Each part is obtained by stripping whitespace and any
-            non-separating characters from the start of the substring to the end
-            of the input string. The parts are returned as a list.
+            Takes a string as input and returns an list of substrings, separated
+            by a specified character (currently ".", "!", or "?") and found after
+            a certain number of characters (75 or 150)
 
             Args:
-                text (str): code or text for which high-quality documentation is
-                    being generated.
+                text (str): string that the function is called upon, which is
+                    divided into parts based on the rules specified in the function.
 
             Returns:
-                list: a list of substrings extracted from a given text based on
-                predefined rules.
+                list: a list of substrings separated by dots, exclamation points,
+                or questions marks.
 
             """
             parts = []
@@ -215,18 +207,21 @@ class SpecificWorker(GenericWorker):
         # Función para generar audio y agregar las rutas de salida a la cola
         def generate_audio(queue):
             """
-            Processes text parts and generates audio files for each part, using a
-            TTS (text-to-speech) model and storing them in a queue.
+            Takes a list of text parts (`text_parts`) and uses a TTS model
+            (`self.model`) to generate audio for each part, storing the output
+            files in a queue (`queue`). When all parts are processed, the function
+            marks the end of the queue by putting `None` in it.
 
             Args:
-                queue (`object`.): Python threading.Queue object that is used to
-                    store the output files generated by the TTS engine and marks
-                    the end of the queue when None is passed to it.
+                queue (`object`.): output file path produced by the TTS model for
+                    each part of the given text, which is put on the queue for
+                    further processing.
                     
-                    		- `queue`: A Python `queue` object used for communication
-                    between worker threads. It has methods to put and get items
-                    from the queue, as well as a `put` method to add an item to
-                    the end of the queue without waiting for it to be processed.
+                    		- `queue`: A Python ` queue` object that stores files for
+                    speech synthesis.
+                    		- `put()` method: Used to add a file to the end of the queue.
+                    		- `get()` method: Retrieves the next file from the front of
+                    the queue and returns it.
 
             """
             for i, part in enumerate(text_parts):
@@ -239,22 +234,23 @@ class SpecificWorker(GenericWorker):
         # Función para reproducir el audio en orden
         def play_audio(queue):
             """
-            Takes a queued path to an audio file, plays it using a `AudioSegment`
-            object and a `EmotionalMotor` proxy, and then removes the audio file
-            from the queue.
+            Processes audio segments from a queue, playing them through an Emotional
+            Motor proxy when the talking flag is set to True and adding them to
+            the queue when done.
 
             Args:
-                queue (`Queue`.): queue that is used to store the path of the audio
-                    file that the `play()` function will play when the `talking()`
-                    method is called.
+                queue (`queue.Queue`.): stream of output files to be processed by
+                    the
+                    function, with each file being pulled from the queue
                     
-                    		- `get()`: Returns the next element from the queue or `None`
-                    if the queue is empty.
-                    		- `is None`: Indicates whether the queue is empty or not.
-                    		- `task_done()`: Indicates that a task has been completed
-                    successfully and the semaphore should be released.
-                    		- `release()`: Releases the semaphore, allowing other tasks
-                    to access the shared resource.
+                    		- `queue`: A Queue class object, which represents a
+                    first-in-first-out (FIFO) queue for handling tasks.
+                    		- `get()`: Returns the next task from the queue or raises a
+                    `queue.Empty` exception if the queue is empty.
+                    		- `task_done()`: Calls the `__call__` method of an object,
+                    which signifies that a task has been completed.
+                    		- `release()`: Releases the semaphore associated with the
+                    queue, allowing other tasks to access it.
 
             """
             while True:
@@ -309,9 +305,8 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Checks if the text queue is empty, if it is not, it takes a text from the
-        queue and uses the `new_tts` method to generate a new TTS output. It then
-        returns `True`.
+        Determines if the text queue is empty, and if not, it retrieves a text
+        item from the queue, creates a new TTS output, and then repeats the process.
 
         Returns:
             bool: `True`.
@@ -348,25 +343,25 @@ class SpecificWorker(GenericWorker):
 
     def actualizar_to_say(self, nuevo):
         """
-        Updates the attribute `to_say` of a TTS node based on an input `nuevo` and
-        the agent ID, then prints "Atributo modificado" and updates the node in
-        the graph.
+        Modifies an attribute in a node named `TTS`, updating its value with the
+        one passed as an argument and printing the updated attribute name.
 
         Args:
-            nuevo (`Attribute`.): new value to be assigned to the `to_say` attribute
-                of the TTS node.
+            nuevo (`Attribute`.): new value that will be assigned to the `to_say`
+                attribute of the `TTS` node.
                 
-                		- `nuevo`: A serialized Python object with attributes related
-                to the TTS system.
-                
-                	Properties of `nuevo`:
-                
-                		- `self.agent_id`: An attribute representing the unique identifier
-                of the agent's conversation partner.
+                		- `nuevo`: A Python object representing a JSON-formatted data
+                dictionary containing attributes related to TTS functionality,
+                specifically the "to_say" attribute.
 
         Returns:
-            bool: a message indicating that an attribute has been modified in the
-            TTS node.
+            Attribute` object: "Atributo modificado".
+            
+            		- `tts_node`: The node representing the TTS (Text-to-Speech) system
+            in the scene graph.
+            		- `nuevo`: A new attribute added to the `tts_node` with the value
+            of `Attribute(nuevo, self.agent_id)`. This attribute represents the
+            new audio content to be synthesized by the TTS system.
 
         """
         tts_node = self.g.get_node("TTS")
@@ -383,15 +378,13 @@ class SpecificWorker(GenericWorker):
 
     def update_node_att(self, id: int, attribute_names: [str]):
         """
-        Updates the attributes of nodes with certain tags and puts new text into
-        a queue for speech synthesis.
+        Updates the attribute value of a node in a graph, based on a specified
+        condition, and also appends the new text to a text queue for further processing.
 
         Args:
-            id (int): node object being processed, allowing the function to operate
-                on the appropriate node within the graph structure.
-            attribute_names ([str]): attribute names of the node that is being
-                processed, and it is used to display them in green color on the
-                console for update purposes.
+            id (int): GLTF node ID for which the attributes should be retrieved.
+            attribute_names ([str]): list of names of attributes that need to be
+                updated in the TTS and LLM nodes.
 
         """
         llm_node = self.g.get_node("LLM")

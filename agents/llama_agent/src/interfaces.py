@@ -15,30 +15,23 @@ import RoboCompLLM
 class Publishes:
     def __init__(self, ice_connector, topic_manager):
         """
-        Sets attributes `self.ice_connector` and `self.mprx`, and assigns
-        `topic_manager` to a attribute named `self.topic_manager`.
+        Initializes an instance of `Self` by setting member variables: `ice_connector`,
+        `mprx`, and `topic_manager`.
 
         Args:
-            ice_connector (object.): icedTEA connector for the IceoryX framework,
-                which is used to interact with external services through the IceoryX
-                platform.
+            ice_connector (`object`.): 3rd party library used to handle Ice
+                (Interoperability Contract for Electronic Communications) connectivity
+                in the provided code.
                 
-                	1/ `ice_connector`: A variable representing an instance of
-                `IceConnector`. No further details are provided in the code snippet
-                given.
-                	2/ `mprx`: An empty dictionary (`{}`). Its purpose or properties
-                are not discussed in the code snippet provided.
-                	3/ `topic_manager`: An instance of `TopicManager`. No further
-                information is available regarding its attributes or properties
-                from the code snippet given.
-            topic_manager (object.): TopicManager class instance that provides
-                access to the managed topics.
+                		- `self.ice_connector`: A `IceConnector` instance that represents
+                the communication channel between the client and server. It provides
+                various methods for establishing and managing the connection.
+            topic_manager (`object`.): manager for managing topics in the communication
+                framework, providing access to various functionalities related to
+                topic management and messaging.
                 
-                		- `self.mprx`: This attribute stores a dictionary containing all
-                the message producers registered with the topic manager. It is an
-                instance variable that cannot be changed after construction.
-                		- `self.ice_connector`: This attribute stores the IceConnector
-                object, which is used to connect to external services.
+                		- `mprx`: This is a dictionary containing the MPrix objects that
+                hold the topics' information.
 
         """
         self.ice_connector = ice_connector
@@ -49,60 +42,44 @@ class Publishes:
     def create_topic(self, topic_name, ice_proxy):
         # Create a proxy to publish a AprilBasedLocalization topic
         """
-        Creates a new topic or retrieves an existing one from the Topic Manager,
-        and then creates an publisher object for that topic using IcePy's `ice_oneway`
-        method. It then sets the topic name in the `mprx` dictionary for later use.
+        Retrieves a topic from the topic manager, creates one if it doesn't exist,
+        and returns an IcePy Publisher object that can be used to publish messages
+        to the topic.
 
         Args:
-            topic_name (icy.topic.TopicName object.): name of a topic for which
-                an instance of its publisher is being requested, and it is used
-                to retrieve or create a publisher instance for that topic.
+            topic_name (str): name of the topic to be retrieved or created.
+            ice_proxy (`ice.Reference` object.): icy publisher object that gets
+                transformed into an unchecked cast publisher object, allowing it
+                to be used as a regular publisher object in the Topic Manager.
                 
-                		- `topic_name`: This is the name of the topic to be created. It
-                is a string attribute that represents the identifier of the topic.
-                
-                	Inside the `while` loop, the following checks are performed:
-                
-                	1/ If the `topic` variable is None, it means that the `topic_manager`
-                could not find the requested topic with the specified name. The
-                program will then try to create a new topic using the `create()`
-                method.
-                	2/ If an `IceStorm.NoSuchTopic` exception is caught, it means
-                that another client has already created a topic with the same name.
-                The program will then print a message indicating that another
-                client has created the topic.
-                	3/ In the third branch of the `while` loop, if the `create()`
-                method throws an exception, it means that there was an error
-                creating the new topic. The program will not handle this exception
-                and will instead print a message.
-                
-                	Inside the `try`-`except` block, the following operations are performed:
-                
-                	1/ The `pub` variable is obtained from the `topic.getPublisher().ice_oneway()`
-                method, which returns an `Ice::InputStream` proxy.
-                	2/ The `proxy` variable is created by unchecked casting the `pub`
-                variable using the `ice_proxy.uncheckedCast()` method. This creates
-                a proxy that can be used to access the topic's publisher.
-                	3/ The `mprx` dictionary is updated with the new topic proxy,
-                where the key is the topic name and the value is the proxy object.
-            ice_proxy (icedriver.Object.): iced tea publisher that is unchecked
-                and cast into an ice proxy, allowing the resulting proxy to be
-                stored in the `mprx` dictionary for later use.
-                
-                		- `uncheckedCast`: This property indicates that the input object
-                is an IcePy proxy and should be cast unchecked to its underlying
-                IceMessenger publication.
+                		- `uncheckedCast`: This is a property of the `ice_proxy` class
+                that indicates whether or not the proxy should be checked for
+                invalidity before being used. In this case, it is set to
+                `uncheckedCast`, which means that the proxy will not be checked
+                for invalidity before being used.
+                		- `ice_oneway`: This is a property of the `pub` object that
+                indicates whether or not the topic can only publish data but cannot
+                subscribe to data from others. In this case, it is set to `ice_oneway`,
+                which means that the topic can only publish data and not subscribe
+                to data from others.
+                		- `getPublisher`: This is a property of the `topic` object that
+                returns the publisher for the topic. It is used in the function
+                to retrieve the publisher for the topic.
+                		- `topic_name`: This is a string that represents the name of the
+                topic. It is used as the argument to the `retrieve` and `create`
+                methods of the `topic_manager` object.
 
         Returns:
-            Ice::Proxy: an Ice Proxy object that provides one-way communication
-            with a topic.
+            IcePy.MPROXY` object: an ICE proxy for the given topic.
             
-            		- `pub`: The publisher for the topic, which is an Ice::OneWay proxy.
-            		- `proxy`: An IceProxy object that wraps the publisher and allows
-            unchecked casting to an Ice::Publisher instance.
-            
-            	Note that the function does not provide a summary at the end, as
-            specified in the directives provided.
+            		- `pub`: This is the publisher interface of the topic, which can be
+            used to send messages to the topic. It is an ice_oneway() object,
+            indicating that it allows one-way communication from sender to receiver
+            without receiving any response.
+            		- `proxy`: This is a proxy object that wraps the `pub` interface and
+            provides additional functionality for working with the topic. It can
+            be used to send messages to the topic, as well as to check if the topic
+            has been created successfully or not.
 
         """
         topic = False
@@ -130,14 +107,17 @@ class Publishes:
 class Requires:
     def __init__(self, ice_connector):
         """
-        Sets up objects for an ice connector and a proxy to the LLM's PRX.
+        Sets up an instance of the `ice_connector` class, creates a proxy for the
+        `LLMProxy` class and maps it to the RoboComp LLM object.
 
         Args:
-            ice_connector (`object`.): ICE connector, which is responsible for
-                handling the interaction between the RoboComP and the external world.
+            ice_connector (`ice_connector`.): iced connection handler for the Robot
+                Operating System (ROS) communication between the LLM and other
+                nodes or services.
                 
-                		- `self.ice_connector`: A variable assigned to hold the deserialized
-                object `ice_connector`.
+                		- `self.ice_connector`: The deserialized input `ice_connector`,
+                which is an instance of `RoboCompLLM`.
+                		- `self.mprx`: An empty dictionary.
 
         """
         self.ice_connector = ice_connector
@@ -151,36 +131,45 @@ class Requires:
     def create_proxy(self, property_name, ice_proxy):
         # Remote object connection for
         """
-        Creates a Proxy object for a remote object specified by a string representation
-        of its ice proxy. It returns a tuple of (success, proxy) indicating whether
-        the creation was successful and the Proxy object created.
+        Creates a proxy for a remote object based on its name and returns a tuple
+        containing the successfully created proxy and a boolean value indicating
+        whether the operation was successful.
 
         Args:
             property_name (str): name of the property to be retrieved from the
                 remote object.
-            ice_proxy (IcePy Proxy.): iced Proxy object that will be returned if
-                the property can be retrieved successfully, or the exception thrown
-                if there is an error in retrieving the property.
+            ice_proxy (`Ice.Prx`.): icy proxy object that is generated from the
+                Ice code and used to retrieve the property value.
                 
-                		- `uncheckedCast`: This is an unchecked conversion of the
-                `base_prx` string to an `ice_proxy` object using the `stringToProxy`
-                method. It returns a reference to the internal implementation of
-                the proxy, without checking if it's valid or not. (source: `Ice.Exception`)
-                		- `mprx`: A dictionary-like object that stores properties of the
-                remote object as proxies. Each property name is associated with a
-                proxy object, which can be obtained by calling the `getProperties`
-                method on the `ice_connector` instance. (source: `self.mprx`)
+                		- `uncheckedCast`: This is an Ice-specific attribute that indicates
+                whether the method returns a wrapped proxy or not.
+                		- `base_prx`: This is the base proxy returned by
+                `self.ice_connector.stringToProxy()`, which can be any type of
+                proxy (e.g., servant, reference, or value).
+                		- `mprx`: This is an instance attribute that stores the retrieved
+                remote object proxy for the specified property name.
 
         Returns:
-            ice. proxy: a tuple of two values: `True`, indicating success, and the
-            created proxy object.
+            ice proxy object: a tuple of two values: a boolean value indicating
+            whether the proxy was created successfully and the created proxy object.
             
-            		- `True, proxy`: If the method call is successful, the output is
-            `True` indicating that the proxy was created successfully, and `proxy`
-            is the created proxy object.
-            		- `False, None`: If the method call fails, the output is `False`,
-            indicating that an error occurred during creation of the proxy, and
-            `None` represents the exception thrown during creation.
+            		- `True, proxy`: If the function succeeds in creating a proxy for
+            the remote object, `True` is returned along with the proxy itself. The
+            proxy can be used to access the remote object through the Ice client.
+            		- `False, None`: If the function encounters an error while trying
+            to create the proxy, `False` is returned along with `None`, indicating
+            that the operation failed.
+            
+            	Inside the try-except block, the following properties/attributes of
+            the output are explained:
+            
+            		- `proxy`: The proxy object created by the `create_proxy` function.
+            This can be used to access the remote object through the Ice client.
+            		- `base_prx`: The base proxy string returned by the
+            `ice_connector.stringToProxy()` method.
+            		- `mprx`: A dictionary that stores the created proxies for different
+            remote objects. In this case, `mprx[property_name]` stores the proxy
+            created for the remote object with the specified `property_name`.
 
         """
         try:
@@ -207,36 +196,29 @@ class Subscribes:
 
     def create_adapter(self, property_name, interface_handler):
         """
-        Creates a new Ice Python adapter object and adds an interface handler to
-        it using one-way proxying. It also retrieves a topic by its name and
-        subscribes to it if it exists, creating it otherwise. Finally, it returns
-        the activated adapter object.
+        Creates an Ice object adapter based on a given property name, adds a handler
+        to the adapter using oneway proxy, retrieves the topic based on the property
+        name, and subscribes to the topic.
 
         Args:
-            property_name (str): name of a property to be created as an Ice::Adapter
-                object, which will be used to handle messages from a given topic.
-            interface_handler (int): handler for an interface that will be created
-                and managed by the adapter when adding it with the UUID returned
-                by the `createObjectAdapter`.
+            property_name (str): name of a property that holds the topic name to
+                be created and subscribed to.
+            interface_handler (int): handler for the created topic, which is used
+                to receive and process messages from the topic.
 
         Returns:
-            ObjectAdapter: an instance of an ICE adaptor with a given name and properties.
+            Adapter: an activated Iceoryx adapter instance.
             
-            		- `adapter`: The IceAdatper object created with the
-            `ice_connector.createObjectAdapter` method.
-            		- `handler`: The interface handler associated with the adapter.
-            		- `proxy`: The IceOneway proxy added to the adapter using the
-            `addWithUUID` method.
-            		- `topic_name`: The name of the topic associated with the adapter,
-            obtained by removing the "Topic" prefix from the property name passed
-            as an argument.
-            		- `subscribe_done`: A boolean value indicating whether the topic has
-            been successfully subscribed to or not. If false, the function tries
-            to create the topic again in a loop until it succeeds.
-            		- `qos`: An empty dictionary (a default value is returned if none
-            is provided as an argument) representing the QoS (quality of service)
-            parameters for the subscription.
-            		- `adapter.activate()`: A method call to activate the adapter.
+            		- `adapter`: An instance of the `ICEConnector` adapter.
+            		- `handler`: A reference to an interface handler object.
+            		- `proxy`: An instance of the `ICEOneWay` proxy.
+            		- `topic_name`: The name of the topic for which the adapter is created.
+            		- `subscribe_done`: A boolean flag indicating whether the topic
+            exists or not. It is set to `True` if the topic exists, and `False` otherwise.
+            		- `qos`: An instance of the `QoS` class, containing information about
+            the quality of service (QoS) settings for the topic.
+            		- `adapter.activate()`: A call to activate the adapter, which makes
+            it available for use in the application.
 
         """
         adapter = self.ice_connector.createObjectAdapter(property_name)
@@ -269,16 +251,14 @@ class Implements:
 
     def create_adapter(self, property_name, interface_handler):
         """
-        Creates a new object adapter based on the provided property name and adds
-        an interface handler to it. It then activates the adapter using the Ice
-        Connector's `activate()` method.
+        Creates an Adaptor object for a given property name and adds an interface
+        handler to it. Then, it activates the adaptor.
 
         Args:
-            property_name (str): name of a property that is being set as the
-                identity for an object adapter created by the function.
-            interface_handler (str): identity of the interface that is to be
-                accessed or communicated through the adapter, which is created and
-                activated by the `self.ice_connector.createObjectAdapter()` method.
+            property_name (str): identity string for the object adapter being
+                created, which is then added to the interface handler and activated.
+            interface_handler (str): 10-tuples containing the interface for which
+                an adaptor is being created.
 
         """
         adapter = self.ice_connector.createObjectAdapter(property_name)
@@ -290,40 +270,14 @@ class InterfaceManager:
     def __init__(self, ice_config_file):
         # TODO: Make ice connector singleton
         """
-        Initializes an Ice framework component by setting instance variables and
-        calling method to interact with the Ice configuration file, connect to the
-        Ice daemon, create a topic manager, set status, and retrieve property values.
+        Initializes an Ice container object, sets up a topic manager, retrieves
+        property values from Ice, and creates `Requires`, `Publishes`, `Implements`,
+        and `Subscribes` objects based on the retrieved properties.
 
         Args:
-            ice_config_file (file path or URL.): iced configuration file used to
-                initialize the Ice runtime environment and establish connections
-                with the necessary endpoints.
-                
-                	1/ `self.ice_config_file`: This attribute stores the deserialized
-                Ice configuration file contents.
-                	2/ `self.ice_connector`: This attribute holds an instance of
-                `Ice.initialize()` method call, which returns an object that manages
-                communication between different objects in the system.
-                	3/ `needs_rcnode`: This variable is set to `False` by default,
-                indicating that no remote node is needed for initialization. If
-                `True`, it means a remote node is required.
-                	4/ `self.topic_manager`: This attribute refers to an object that
-                manages topics and their related data in the system. It is created
-                only if `needs_rcnode` is `True`.
-                	5/ `self.status`: This attribute holds the current status of the
-                Ice connection, which can be any integer value between 0 and 2.
-                	6/ `self.parameters`: This attribute maps property names to their
-                corresponding values received from the Ice configuration file.
-                Each entry in the dictionary is a string representation of a
-                property name followed by its value.
-                	7/ `self.requires`: This attribute stores a list of dependent
-                topics that are required for this topic to function correctly.
-                	8/ `self.publishes`: This attribute lists the topics that this
-                topic publishes data to.
-                	9/ `self.implements`: This attribute holds the interfaces implemented
-                by this topic.
-                	10/ `self.subscribes`: This attribute represents the interfaces
-                subscribed by this topic.
+            ice_config_file (str): configuration file for the Ice framework, which
+                is used to initialize and set up the necessary objects and properties
+                for the rest of the function to work properly.
 
         """
         self.ice_config_file = ice_config_file
@@ -345,16 +299,16 @@ class InterfaceManager:
     def init_topic_manager(self):
         # Topic Manager
         """
-        Gets the Proxy value for Topic Manager from the properties and casts it
-        to an IceStorm.TopicManagerPrx object. If the connection is refused, an
-        error message is logged and the function exits with a negative status code.
+        Takes a property value representing a Proxy and converts it into an instance
+        of `TopicManagerPrx`. If the connection to the proxy is refused, it logs
+        an error message and exits with a negative status code.
 
         Returns:
-            IceStorm.TopicManagerPrx` object: an instance of `TopicManagerPrx`.
+            IceStorm.TopicManagerPrx` instance: an IceStorm TopicManager Prx object.
             
-            		- `proxy`: A string representing the proxy to be used for communication
-            with the Topic Manager.
-            		- `obj`: An object reference representing the Topic Manager proxy.
+            		- `TopicManagerPrx`: This is the Proxy object representing the Topic
+            Manager instance. It can be cast to an IceStorm.TopicManager Prx using
+            `checkedCast()`.
 
         """
         proxy = self.ice_connector.getProperties().getProperty("TopicManager.Proxy")
@@ -371,12 +325,18 @@ class InterfaceManager:
 
     def get_proxies_map(self):
         """
-        Updates the `result` object with proxies maps obtained from both `requires`
-        and `publishes` dependencies.
+        Updates the `result` dictionary with the union of `requires` and `publishes`
+        proxies maps.
 
         Returns:
-            dict: a dictionary containing the proxies required and published by
-            the class instance.
+            object: a dictionary of proxies for both requires and publishes, keyed
+            by endpoint.
+            
+            	The `result` dictionary contains proxies maps from both `requires`
+            and `publishes`. These maps represent the mappings between original
+            URLs and their corresponding proxied versions. The maps contain keys
+            that correspond to the original URLs and values that represent the
+            proxied URLs.
 
         """
         result = {}
