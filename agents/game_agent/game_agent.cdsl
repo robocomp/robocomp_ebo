@@ -1,0 +1,10 @@
+Component game_agent
+{
+    Communications
+    {
+
+    };
+    language python;
+    options dsr;
+};
+

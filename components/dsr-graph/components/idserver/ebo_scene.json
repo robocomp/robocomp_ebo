@@ -1,0 +1,263 @@
+{
+    "DSRModel": {
+        "symbols": {
+            "100": {
+                "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "SeaGreen"
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 0
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 14.705086
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -180.877975
+                    }
+                },
+                "id": "100",
+                "links": [
+                    {
+                        "dst": "200",
+                        "label": "RT",
+                        "linkAttribute": {
+                            "rt_rotation_euler_xyz": {
+                                "type": 3,
+                                "value": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            },
+                            "rt_translation": {
+                                "type": 3,
+                                "value": [
+                                    0,
+                                    0,
+                                    0
+                                ]
+                            }
+                        },
+                        "src": "100"
+                    },
+                    {
+                        "dst": "180513889253851137",
+                        "label": "has",
+                        "linkAttribute": {
+                        },
+                        "src": "100"
+                    }
+                ],
+                "name": "root",
+                "type": "root"
+            },
+            "180513889253851137": {
+                "attribute": {
+                    "agent_description": {
+                        "type": 0,
+                        "value": "TODO"
+                    },
+                    "agent_id": {
+                        "type": 6,
+                        "value": 1
+                    },
+                    "agent_name": {
+                        "type": 0,
+                        "value": "Participant_1 ( idserver )"
+                    },
+                    "cpu_usage": {
+                        "type": 2,
+                        "value": 13
+                    },
+                    "memory_usage": {
+                        "type": 6,
+                        "value": 187576
+                    },
+                    "num_procs": {
+                        "type": 6,
+                        "value": 32
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "100"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 97.180153
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -35.165619
+                    },
+                    "timestamp_agent": {
+                        "type": 7,
+                        "value": "1717053980492862871"
+                    },
+                    "timestamp_alivetime": {
+                        "type": 7,
+                        "value": "118"
+                    },
+                    "timestamp_creation": {
+                        "type": 7,
+                        "value": "1717053862462914697"
+                    }
+                },
+                "id": "180513889253851137",
+                "links": [
+                ],
+                "name": "Participant_1 ( idserver )",
+                "type": "agent"
+            },
+            "180513894102466571": {
+                "attribute": {
+                    "in_llama": {
+                        "type": 0,
+                        "value": "IN"
+                    },
+                    "out_llama": {
+                        "type": 0,
+                        "value": "OUT"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": -226.666199
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": 120.424088
+                    }
+                },
+                "id": "180513894102466571",
+                "links": [
+                ],
+                "name": "LLM",
+                "type": "llm"
+            },
+            "180513910913236998": {
+                "attribute": {
+                    "escuchando": {
+                        "type": 4,
+                        "value": false
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": -153.005417
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": 118.096985
+                    },
+                    "texto": {
+                        "type": 0,
+                        "value": "Texto escuchado"
+                    }
+                },
+                "id": "180513910913236998",
+                "links": [
+                ],
+                "name": "ASR",
+                "type": "asr"
+            },
+            "180513928764194821": {
+                "attribute": {
+                    "pos_x": {
+                        "type": 2,
+                        "value": -80.999519
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": 120.150528
+                    },
+                    "to_say": {
+                        "type": 0,
+                        "value": "¡Hola mundo!"
+                    }
+                },
+                "id": "180513928764194821",
+                "links": [
+                ],
+                "name": "TTS",
+                "type": "tts"
+            },
+            "200": {
+                "attribute": {
+                    "base_target_x": {
+                        "type": 2,
+                        "value": 3600
+                    },
+                    "base_target_y": {
+                        "type": 2,
+                        "value": 1550
+                    },
+                    "color": {
+                        "type": 0,
+                        "value": "Blue"
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 1
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "100"
+                    },
+                    "port": {
+                        "type": 1,
+                        "value": 12238
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": -155.453766
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -42.01453
+                    },
+                    "robot_ref_adv_speed": {
+                        "type": 2,
+                        "value": 0
+                    },
+                    "robot_ref_rot_speed": {
+                        "type": 2,
+                        "value": 0
+                    },
+                    "robot_ref_side_speed": {
+                        "type": 2,
+                        "value": 0
+                    }
+                },
+                "id": "200",
+                "links": [
+                    {
+                        "dst": "180513894102466571",
+                        "label": "has",
+                        "linkAttribute": {
+                        },
+                        "src": "200"
+                    },
+                    {
+                        "dst": "180513910913236998",
+                        "label": "has",
+                        "linkAttribute": {
+                        },
+                        "src": "200"
+                    },
+                    {
+                        "dst": "180513928764194821",
+                        "label": "has",
+                        "linkAttribute": {
+                        },
+                        "src": "200"
+                    }
+                ],
+                "name": "EBO",
+                "type": "omnirobot"
+            }
+        }
+    }
+}
