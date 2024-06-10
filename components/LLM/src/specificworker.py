@@ -25,6 +25,14 @@ from rich.console import Console
 from genericworker import *
 import interfaces as ifaces
 
+from huggingface_hub import hf_hub_download
+from langchain.llms.llamacpp import LlamaCpp
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain.vectorstores.chroma import Chroma
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
 
@@ -38,12 +46,15 @@ console = Console(highlight=False)
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
-        self.Period = 2000
+        self.Period = 10
         if startup_check:
             self.startup_check()
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+
+        # Initialize LLM and conversation history
+        self.init_llm()
 
     def __del__(self):
         """Destructor"""
@@ -60,41 +71,96 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
 
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
+        # testing LLM
+        print(self.LLM_generateResponse(input("Talk to me:\n")))
 
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
-
-
     # =============== Methods for Component Implements ==================
     # ===================================================================
 
-    #
-    # IMPLEMENTATION of generateResponse method from LLM interface
-    #
-    def LLM_generateResponse(self):
-        ret = str()
-        #
-        # write your CODE here
-        #
-        return ret
+
+    def format_docs(self, docs):
+        text = ""
+        for d in docs:
+            text += f"- {d.page_content}\n"
+
+        return text
+    
+    def init_llm(self):
+        # Download model from Huggingface
+        model_path = hf_hub_download(
+            repo_id="lmstudio-community/Llama3-ChatQA-1.5-8B-GGUF",
+            filename="ChatQA-1.5-8B-IQ4_NL.gguf",
+            force_download=False
+        )
+
+        # Load the model
+        self.llm = LlamaCpp(
+            model_path=model_path,
+            stop=["<|begin_of_text|>"],
+            n_gpu_layers=-1,
+            n_ctx=2048,
+            max_tokens=2048,
+            temperature=0.3, 
+            streaming=True
+        )
+
+        model_name = "mixedbread-ai/mxbai-embed-large-v1"
+        model_kwargs = {"device": "cpu"}
+        encode_kwargs = {"normalize_embeddings": True}
+
+        embeddings_model = HuggingFaceBgeEmbeddings(
+            model_name=model_name,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
+
+        # Initialize conversation history
+        self.db = Chroma(embedding_function=embeddings_model)
+
+        retriever = self.db.as_retriever()
+
+        self.db.add_texts([""])
+
+        # create the prompt template
+        template = """System: This is a chat in Spanish between a user and an artificial intelligence assistant that generate true/false sentences about activities of daily life. Your propositions must be like this: "Lavarse las manos con agua sola elimina los gérmenes. ¿verdadero falso?" and you must wait for the answer, then you have to explain why.
+
+        {context}
+
+        User: {Question}
+
+        Assistant: 
+        """
+
+        prompt = PromptTemplate.from_template(template)
+
+        # create the chain
+        output_parser = StrOutputParser()
+
+        setup_and_retrieval = RunnableParallel(
+            {"context": retriever | self.format_docs, "Question": RunnablePassthrough()}
+        )
+
+        self.chain = setup_and_retrieval | prompt | self.llm | output_parser
+
+    ############################
+    # GENERATE RESPONSE
+    ############################
+
+    def LLM_generateResponse(self, user_response):
+        # Interacting with model
+        llm_response = self.chain.invoke(user_response)
+        print("Assistant's response:")
+
+        # updating chroma database
+        self.db.add_texts(["User: " + user_response, "Assistant: " + llm_response])
+
+        return llm_response
     # ===================================================================
     # ===================================================================
-
-
 
