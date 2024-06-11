@@ -95,7 +95,7 @@ class SpecificWorker(GenericWorker):
         # Download model from Huggingface
         model_path = hf_hub_download(
             repo_id="lmstudio-community/Llama3-ChatQA-1.5-8B-GGUF",
-            filename="ChatQA-1.5-8B-IQ4_NL.gguf",
+            filename="ChatQA-1.5-8B-Q8_0.gguf",
             force_download=False
         )
 
