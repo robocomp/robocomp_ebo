@@ -25,6 +25,14 @@ from rich.console import Console
 from genericworker import *
 import interfaces as ifaces
 
+from huggingface_hub import hf_hub_download
+from langchain.llms.llamacpp import LlamaCpp
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain.vectorstores.chroma import Chroma
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
 
@@ -38,24 +46,29 @@ console = Console(highlight=False)
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes a worker object by defining the proxy map, setting the period
-        for the timer to 2000 milliseconds, and connecting a callback to run the
-        `compute` function upon timeout.
+        Initializes a specific worker object by setting its attributes, including
+        `proxy_map`, `Period`, and an internal timer to perform computations every
+        `Period` seconds. It also initializes the LLM and conversation history.
 
         Args:
-            proxy_map (dict): map of proxies that will be used by the instance
-                when executing its tasks.
-            startup_check (bool): execution of a startup check function, which is
-                executed if it is present in the function's call.
+            proxy_map (dict): mapping between the worker's original code and its
+                generated documentation, which is used to generate high-quality
+                documentation for the code.
+            startup_check (bool): initial state of the worker, triggering a check
+                to be executed if set to `True`, otherwise ignoring the check and
+                proceeding with the designated action.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
-        self.Period = 2000
+        self.Period = 10
         if startup_check:
             self.startup_check()
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
+
+        # Initialize LLM and conversation history
+        self.init_llm()
 
     def __del__(self):
         """Destructor"""
@@ -72,57 +85,146 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         """
-        Sets speed, updates transform values for the head rot and tilt pose,
-        computes a QVec matrix for laser, and prints the resulting vector.
+        Computes a response to user input using a language model (LLM).
 
         Returns:
-            bool: a boolean value `True`.
+            True: a generated response based on user input.
+            
+            		- `print('SpecificWorker.compute...')`: The print statement indicates
+            that the function is executed and prints the result to the console.
+            		- `# testing LLM`: This line is a comment indicating that the function
+            tests the `LLM_generateResponse` method.
+            		- `print(self.LLM_generateResponse(input("Talk to me:\n"))):` The
+            function calls the `LLM_generateResponse` method with the input "Talk
+            to me:". The output of this method is printed to the console.
+            		- `return True`: The function returns `True`, indicating that the
+            function executed successfully.
 
         """
         print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
 
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
+        # testing LLM
+        print(self.LLM_generateResponse(input("Talk to me:\n")))
 
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
-
-
     # =============== Methods for Component Implements ==================
     # ===================================================================
 
-    #
-    # IMPLEMENTATION of generateResponse method from LLM interface
-    #
-    def LLM_generateResponse(self):
+
+    def format_docs(self, docs):
         """
-        Takes no arguments and returns a string value representing high-quality
-        documentation for given code.
+        Concatenates the page content of a list of dictionaries, each representing
+        a documentation page, and returns the resulting string.
+
+        Args:
+            docs (list): list of code documentation pages that the function generates
+                high-quality documentation for.
 
         Returns:
-            str: a string representing high-quality documentation for given code.
+            str: a list of page contents for each document in the `docs` list.
 
         """
-        ret = str()
-        #
-        # write your CODE here
-        #
-        return ret
+        text = ""
+        for d in docs:
+            text += f"- {d.page_content}\n"
+
+        return text
+    
+    def init_llm(self):
+        # Download model from Huggingface
+        """
+        Loads a pre-trained language model and an embeddings model, initializes a
+        conversation history, creates a prompt template, and sets up a chain of
+        components for generating responses to user queries using the language model.
+
+        """
+        model_path = hf_hub_download(
+            repo_id="lmstudio-community/Llama3-ChatQA-1.5-8B-GGUF",
+            filename="ChatQA-1.5-8B-Q8_0.gguf",
+            force_download=False
+        )
+
+        # Load the model
+        self.llm = LlamaCpp(
+            model_path=model_path,
+            stop=["<|begin_of_text|>"],
+            n_gpu_layers=-1,
+            n_ctx=2048,
+            max_tokens=2048,
+            temperature=0.3, 
+            streaming=True
+        )
+
+        model_name = "mixedbread-ai/mxbai-embed-large-v1"
+        model_kwargs = {"device": "cpu"}
+        encode_kwargs = {"normalize_embeddings": True}
+
+        embeddings_model = HuggingFaceBgeEmbeddings(
+            model_name=model_name,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
+
+        # Initialize conversation history
+        self.db = Chroma(embedding_function=embeddings_model)
+
+        retriever = self.db.as_retriever()
+
+        self.db.add_texts([""])
+
+        # create the prompt template
+        template = """System: This is a chat in Spanish between a user and an artificial intelligence assistant that generate true/false sentences about activities of daily life. Your propositions must be like this: "Lavarse las manos con agua sola elimina los gérmenes. ¿verdadero falso?" and you must wait for the answer, then you have to explain why.
+
+        {context}
+
+        User: {Question}
+
+        Assistant: 
+        """
+
+        prompt = PromptTemplate.from_template(template)
+
+        # create the chain
+        output_parser = StrOutputParser()
+
+        setup_and_retrieval = RunnableParallel(
+            {"context": retriever | self.format_docs, "Question": RunnablePassthrough()}
+        )
+
+        self.chain = setup_and_retrieval | prompt | self.llm | output_parser
+
+    ############################
+    # GENERATE RESPONSE
+    ############################
+
+    def LLM_generateResponse(self, user_response):
+        # Interacting with model
+        """
+        Utilizes a language model (LLM) to generate a response to user input based
+        on previous responses and updates the chroma database with the generated
+        text and the original user response.
+
+        Args:
+            user_response (str): human's response to the chatbot, which the function
+                then generates high-quality documentation for based on its language
+                model capabilities.
+
+        Returns:
+            str: a generated response from the LLM model based on the input user
+            response.
+
+        """
+        llm_response = self.chain.invoke(user_response)
+        print("Assistant's response:")
+
+        # updating chroma database
+        self.db.add_texts(["User: " + user_response, "Assistant: " + llm_response])
+
+        return llm_response
     # ===================================================================
     # ===================================================================
-
-
 
