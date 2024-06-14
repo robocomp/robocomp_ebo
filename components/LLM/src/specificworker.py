@@ -26,11 +26,11 @@ from genericworker import *
 import interfaces as ifaces
 
 from huggingface_hub import hf_hub_download
-from langchain.llms.llamacpp import LlamaCpp
+from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from langchain.vectorstores.chroma import Chroma
+from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
 sys.path.append('/opt/robocomp/lib')
@@ -94,20 +94,21 @@ class SpecificWorker(GenericWorker):
     def init_llm(self):
         # Download model from Huggingface
         model_path = hf_hub_download(
-            repo_id="lmstudio-community/Llama3-ChatQA-1.5-8B-GGUF",
-            filename="ChatQA-1.5-8B-Q8_0.gguf",
+            repo_id="TheBloke/Mistral-7B-OpenOrca-GGUF",
+            filename="mistral-7b-openorca.Q8_0.gguf",
             force_download=False
         )
 
         # Load the model
         self.llm = LlamaCpp(
             model_path=model_path,
-            stop=["<|begin_of_text|>"],
+            stop=["<|im_end|>"],
             n_gpu_layers=-1,
-            n_ctx=2048,
+            n_ctx=2048*4,
             max_tokens=2048,
             temperature=0.3, 
-            streaming=True
+            streaming=True, 
+            top_p=0.8
         )
 
         model_name = "mixedbread-ai/mxbai-embed-large-v1"
@@ -128,13 +129,11 @@ class SpecificWorker(GenericWorker):
         self.db.add_texts([""])
 
         # create the prompt template
-        template = """System: This is a chat in Spanish between a user and an artificial intelligence assistant that generate true/false sentences about activities of daily life. Your propositions must be like this: "Lavarse las manos con agua sola elimina los gérmenes. ¿verdadero falso?" and you must wait for the answer, then you have to explain why.
-
-        {context}
-
-        User: {Question}
-
-        Assistant: 
+        template = """<|im_start|>system: you speak fluent Spanish and you are able to generate good true/false questions about the topic the user mentions. 
+        {system_message}<|im_end|>
+        <|im_start|>user
+        {prompt}<|im_end|>
+        <|im_start|>assistant
         """
 
         prompt = PromptTemplate.from_template(template)
@@ -143,7 +142,7 @@ class SpecificWorker(GenericWorker):
         output_parser = StrOutputParser()
 
         setup_and_retrieval = RunnableParallel(
-            {"context": retriever | self.format_docs, "Question": RunnablePassthrough()}
+            {"system_message": retriever | self.format_docs, "prompt": RunnablePassthrough()}
         )
 
         self.chain = setup_and_retrieval | prompt | self.llm | output_parser
@@ -158,7 +157,7 @@ class SpecificWorker(GenericWorker):
         print("Assistant's response:")
 
         # updating chroma database
-        self.db.add_texts(["User: " + user_response, "Assistant: " + llm_response])
+        self.db.add_texts([" - User: " + user_response + " - Assistant: " + llm_response])
 
         return llm_response
     # ===================================================================
