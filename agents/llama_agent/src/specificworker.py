@@ -25,10 +25,21 @@ from rich.console import Console
 from genericworker import *
 import interfaces as ifaces
 
+##################### Imports del LLM: #########################
+from huggingface_hub import hf_hub_download
+from langchain.llms.llamacpp import LlamaCpp
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain.vectorstores.chroma import Chroma
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+##########################################################################
+
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
 
 from pydsr import *
+
 
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
@@ -40,27 +51,17 @@ from pydsr import *
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         """
-        Initializes a `DSRGraph` object, setting the agent ID and graph topology.
-        It also reads initial node attributes, sets up signal connections for
-        attribute updates and timer for automatic computation.
+        Initializes a SpecificWorker class instance, creating a DSRGraph object,
+        setting its period, agent ID, and connecting signals for node and edge
+        updates and deletions.
 
         Args:
-            proxy_map (`object`.): graph structure of the original code, which is
-                used to create the DSRGraph object in the function.
-                
-                	1/ `self.Period`: The period of time in milliseconds to update
-                the graph.
-                	2/ `self.agent_id`: A unique integer ID for this agent in the deployment.
-                	3/ `self.g`: A DSRGraph object representing the graph.
-                	4/ `llm_node`: A Node object representing the LLama node in the
+            proxy_map (int): mapping of original nodes to proxies, which allows
+                the agent to handle messages intended for different nodes in the
                 graph.
-                	5/ `asr_node`: A Node object representing the ASR node in the graph.
-                	6/ `signals`: An instance of Signal class, which can be used to
-                connect signals to the graph.
-            startup_check (bool): Whether the check should run during startup,
-                which if set to `True`, will execute the `startup_check()` method
-                and perform the necessary initializations and checks, otherwise
-                it will omit this step.
+            startup_check (bool): initial validation of the agent's startup state,
+                which checks if the agent has already started its computation cycle
+                before initiating the timeout loop.
 
         """
         super(SpecificWorker, self).__init__(proxy_map)
@@ -104,6 +105,8 @@ class SpecificWorker(GenericWorker):
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
 
+        # Initialize LLM and conversation history
+        self.init_llm()
 
 
     def __del__(self):
@@ -140,38 +143,154 @@ class SpecificWorker(GenericWorker):
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
 
+    def format_docs(self, docs):
+        """
+        Concatenates page content from a list of `Docs` objects, separated by
+        newline characters.
+
+        Args:
+            docs (sequence or collection of Page objects.): list of documents whose
+                page contents are to be concatenated into a string.
+                
+                	* `docs`: A list of dict objects representing documentation pages.
+                Each page is represented by a dictionary containing the following
+                attributes:
+                		+ `page_content`: The content of the documentation page as a string.
+
+        Returns:
+            undefined: a list of page contents from given documentation documents,
+            separated by newlines.
+
+        """
+        text = ""
+        for d in docs:
+            text += f"- {d.page_content}\n"
+
+        return text
+
+    def init_llm(self):
+        # Download model from Huggingface
+        """
+        Initializes a LLaMA model for generating text based on given input, and
+        loads an embedding model to be used as the first stage in the chain for
+        generating responses.
+
+        """
+        model_path = hf_hub_download(
+            repo_id="lmstudio-community/Llama3-ChatQA-1.5-8B-GGUF",
+            filename="ChatQA-1.5-8B-Q8_0.gguf",
+            force_download=False
+        )
+
+        # Load the model
+        self.llm = LlamaCpp(
+            model_path=model_path,
+            stop=["<|begin_of_text|>"],
+            n_gpu_layers=-1,
+            n_ctx=2048,
+            max_tokens=2048,
+            temperature=0.3,
+            streaming=True
+        )
+
+        model_name = "mixedbread-ai/mxbai-embed-large-v1"
+        model_kwargs = {"device": "cpu"}
+        encode_kwargs = {"normalize_embeddings": True}
+
+        embeddings_model = HuggingFaceBgeEmbeddings(
+            model_name=model_name,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
+
+        # Initialize conversation history
+        self.db = Chroma(embedding_function=embeddings_model)
+
+        retriever = self.db.as_retriever()
+
+        self.db.add_texts([""])
+
+        # create the prompt template
+        template = """System: This is a chat in Spanish between a user and an artificial intelligence assistant that generate true/false sentences about activities of daily life. Your propositions must be like this: "Lavarse las manos con agua sola elimina los gérmenes. ¿verdadero falso?" and you must wait for the answer, then you have to explain why.
+
+        {context}
+
+        User: {Question}
+
+        Assistant: 
+        """
+
+        prompt = PromptTemplate.from_template(template)
+
+        # create the chain
+        output_parser = StrOutputParser()
+
+        setup_and_retrieval = RunnableParallel(
+            {"context": retriever | self.format_docs, "Question": RunnablePassthrough()}
+        )
+
+        self.chain = setup_and_retrieval | prompt | self.llm | output_parser
 
     ######################
     # From the RoboCompLLM you can call this methods:
     # self.llm_proxy.generateResponse(...)
 
+    ############################
+    # GENERATE RESPONSE
+    ############################
+
+    def LLM_generateResponse(self, user_response):
+        # Interacting with model
+        """
+        Takes a user response and generates a corresponding assistant response
+        using a language model chain, adding the responses to a chroma database
+        for future use.
+
+        Args:
+            user_response (str): human response to the given prompt or query, which
+                is used as input to the LLM model to generate the corresponding
+                assistant response.
+
+        Returns:
+            undefined: a natural language response generated based on user input.
+
+        """
+        llm_response = self.chain.invoke(user_response)
+        print("Assistant's response:")
+
+        # updating chroma database
+        self.db.add_texts(["User: " + user_response, "Assistant: " + llm_response])
+
+        return llm_response
+
     # Actualiza llama_out con la respuesta generada
     def actualizar_out(self,respuesta_gen):
         """
-        Updates an LLM node's `out_llama` attribute with a new value and prints a
-        message indicating that the attribute has been modified.
+        Updates an LLM node's "out_llama" attribute with the response generated
+        by a `respuesta_gen` function and then updates the node in the graph.
 
         Args:
-            respuesta_gen (Attribute object.): attribute value to be assigned to
-                the "out_llama" attribute of the LLM node in the graph.
+            respuesta_gen (Attribute object.): attribute value that will be assigned
+                to the `out_llama` attribute of the LLM node in the graph.
                 
-                		- `respuesta_gen`: A Python object that contains the generated
-                response for the LLM node. It is an instance of the `Attribute`
-                class with several attributes, including `self.agent_id`.
+                	* `respuesta_gen`: A `pydantic.BaseModel` object containing
+                information about an LLM node.
+                	* `self.agent_id`: The ID of the agent that is being updated.
+                
+                	Therefore, `actualizar_out` modifies the attribute `out_llama`
+                of the LLM node with the deserialized input `respuesta_gen`, and
+                updates the node in the graph using the `update_node()` method.
 
         Returns:
-            Attribute` object: a modified LLM node with an updated "out_llama" attribute.
+            undefined: a string indicating that an attribute has been modified and
+            the LLM node has been updated in the graph.
             
-            		- `print("Atributo modificado")`: This statement is used to print a
-            message indicating that the "out_llama" attribute of the LLM node has
-            been modified.
-            		- `llm_node.attrs["out_llama"] = Attribute(respuesta_gen, self.agent_id)`:
-            This line sets the value of the "out_llama" attribute of the LLM node
-            to an instance of the `Attribute` class, which represents the response
-            generated by the agent. The `self.agent_id` variable is used to provide
-            the id of the agent that generated the response.
-            		- `self.g.update_node(llm_node)`: This line updates the LLM node in
-            the graph with the modified attribute value.
+            	* `print("Atributo modificado")`: This line prints a message indicating
+            that an attribute has been modified.
+            	* `llm_node.attrs["out_llama"] = Attribute(respuesta_gen, self.agent_id)`:
+            This line sets the value of the `out_llama` attribute of the `LLM`
+            node to an instance of the `Attribute` class, along with the ID of the
+            agent that made the modification.
 
         """
         llm_node = self.g.get_node("LLM")
@@ -186,19 +305,12 @@ class SpecificWorker(GenericWorker):
     # Pone vacío llama_in; esto es por si acaso se repite una respuesta del jugador (Dos veces de seguido Verdadero por ejemplo)
     def borrar_in(self):
         """
-        Modifies the attribute "in_llama" of the LLM node and updates the node in
-        the graph.
+        Updates the attribute `in_llama` of a LLM node with the value of an agent's
+        ID and prints a message indicating that the attribute has been modified.
 
         Returns:
-            False` value: "Atributo modificado".
-            
-            	1/ `print("Atributo modificado")`: This statement is used to print a
-            message indicating that an attribute has been modified in the LLM node.
-            	2/ `self.g.update_node(llm_node)`: This statement updates the LLM
-            node in the graph with the modified attributes.
-            
-            	The output returned by the `borrar_in` function is a boolean value
-            indicating whether the LLM node was found and modified.
+            undefined: a formal and neutral passage of no more than 100 words,
+            without repeating the question or using first-person statements.
 
         """
         llm_node = self.g.get_node("LLM")
@@ -212,28 +324,35 @@ class SpecificWorker(GenericWorker):
 
     def actualizar_in(self,nuevo):
         """
-        Modifies the "in_llama" attribute of an LLM node in the graph, based on a
-        new value provided as input.
+        Modifies an attribute in an LLM node based on a provided value and agent
+        ID, updates the node in the graph, and prints "Atributo modificado".
 
         Args:
-            nuevo (`Attribute`.): new value of the "in_llama" attribute for the
-                LLM node in the graph.
+            nuevo (`Attribute`.): new attribute value that will be assigned to the
+                "in_llama" attribute of the LLM node in the graph.
                 
-                		- `nuevo`: A dictionay-like object representing the updated LLM
-                attributes.
-                		- `self.agent_id`: The ID of the agent that is modifying the
-                LLM's attributes.
+                	* `self.agent_id`: This is an attribute that contains the unique
+                identifier of the agent that is performing the action.
+                	* ` Attribute(nuevo, self.agent_id)`: This is a constructor
+                function that creates a new instance of the `Attribute` class,
+                taking `nuevo` as input and `self.agent_id` as an additional
+                argument. The `Attribute` class represents a custom attribute that
+                can be attached to a node in the graph.
+                	* `llm_node`: This is a reference to the node representing the
+                LLM in the graph.
+                	* `self.g`: This is a reference to the Graph object, which contains
+                the graph structure and various functions for manipulating it.
 
         Returns:
-            False: a statement indicating that an attribute has been modified,
-            followed by the update of the `LLM` node in the graph.
+            undefined: "Atributo modificado".
             
-            		- `print("Atributo modificado")` - Indicates that an attribute has
-            been modified in the LLM node.
-            		- `llm_node.attrs["in_llama"] = Attribute(nuevo, self.agent_id)` -
-            Modifies the "in_llama" attribute of the LLM node with a new value.
-            		- `self.g.update_node(llm_node)` - Updates the node in the graph
-            with the modified attributes.
+            	* `print("Atributo modificado")`: This line prints a message to the
+            console indicating that an attribute has been modified.
+            	* `self.g.update_node(llm_node)`: This line updates the node in the
+            graph with the modified attribute. The exact effect of this line depends
+            on the specific implementation of the `self.g` object, but it is
+            typically used to update the node's attributes or links based on user
+            input or other events.
 
         """
         llm_node = self.g.get_node("LLM")
@@ -251,14 +370,15 @@ class SpecificWorker(GenericWorker):
 
     def update_node_att(self, id: int, attribute_names: [str]):
         """
-        Updates the attributes of a node based on the values of other nodes in the
-        graph, storing the new values in instance variables and calling an included
-        function to generate a response.
+        Updates the attributes of a node based on its current state and previous
+        values, storing the response generated by the LLM in a variable for later
+        use.
 
         Args:
-            id (int): node ID being processed by the function.
-            attribute_names ([str]): names of the attributes that will be retrieved
-                from the nodes in the graph for update operations.
+            id (int): ID of the node that needs to be updated, which is passed to
+                the function as an argument for reference and updating purposes.
+            attribute_names ([str]): attribute names of the nodes being updated,
+                which are displayed in green text in the console for logging purposes.
 
         """
         asr_node = self.g.get_node("ASR")
@@ -273,8 +393,9 @@ class SpecificWorker(GenericWorker):
             if llm_node.attrs["in_llama"].value != "":
                 self.last_in = llm_node.attrs["in_llama"].value
                 #respuesta = "Funciona"# Incluir aquí función para generar respuesta, que lo almacene en una variable
+                #respuesta = self.LLM_generateResponse(self.last_in)
                 #self.actualizar_out(respuesta)
-                self.borrar_in()
+                #self.borrar_in()
             else:
                 pass
 
@@ -283,23 +404,7 @@ class SpecificWorker(GenericWorker):
         #console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
 
     def update_node(self, id: int, type: str):
-        """
-        Updates a node based on its attributes, including `texto`, and passes any
-        necessary output to the `actualizar_to_say` function.
-
-        Args:
-            id (int): ID of the ASR (Automatic Speech Recognition) node, which is
-                used to retrieve the appropriate node from the graph.
-            type (str): type of output to be generated by the function, which is
-                then used to update the `last_out` attribute accordingly.
-
-        """
-        asr_node = self.g.get_node("ASR")
-        if asr_node.attrs["texto"].value != self.last_texto:
-            self.last_out = llm_node.attrs["out_llama"].value
-            self.actualizar_to_say(self.last_out)
-        else:
-            pass
+        console.print(f"UPDATE NODE: {id} {type}", style='green')
 
     def delete_node(self, id: int):
         console.print(f"DELETE NODE:: {id} ", style='green')
