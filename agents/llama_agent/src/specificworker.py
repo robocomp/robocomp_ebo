@@ -248,15 +248,19 @@ class SpecificWorker(GenericWorker):
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
-        asr_node = self.g.get_node("ASR")
-        if asr_node.attrs["texto"].value != self.last_texto:
-            self.last_texto = asr_node.attrs["texto"].value
-            self.actualizar_in(self.last_texto)
+        ther_node = self.g.get_node("Therapist")
+        if ther_node.attrs["automatic_mode"].value == True:
+            asr_node = self.g.get_node("ASR")
+            if asr_node.attrs["texto"].value != self.last_texto and asr_node.attrs["texto"].value != "":
+                self.last_texto = asr_node.attrs["texto"].value
+                self.actualizar_in(self.last_texto)
+            else:
+                pass
         else:
             pass
 
         llm_node = self.g.get_node("LLM")
-        if llm_node.attrs["in_llama"].value != self.last_in:
+        if llm_node.attrs["in_llama"].value != self.last_in and llm_node.attrs["in_llama"].value != "":
             if llm_node.attrs["in_llama"].value != "":
                 self.last_in = llm_node.attrs["in_llama"].value
                 #respuesta = "Funciona"# Incluir aquí función para generar respuesta, que lo almacene en una variable

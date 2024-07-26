@@ -269,18 +269,22 @@ class SpecificWorker(GenericWorker):
     # =============================================
 
     def update_node_att(self, id: int, attribute_names: [str]):
-        llm_node = self.g.get_node("LLM")
-        if llm_node.attrs["out_llama"].value != self.last_out:
-            self.last_out = llm_node.attrs["out_llama"].value
-            self.actualizar_to_say(self.last_out)
-        else:
-            pass
+        ther_node = self.g.get_node("Therapist")
+        if ther_node.attrs["automatic_mode"].value == True:
+            llm_node = self.g.get_node("LLM")
+            if llm_node.attrs["out_llama"].value != self.last_out and llm_node.attrs["out_llama"].value != "":
+                self.last_out = llm_node.attrs["out_llama"].value
+                self.actualizar_to_say(self.last_out)
+            else:
+                pass
 
-        tts_node = self.g.get_node("TTS")
-        if tts_node.attrs["to_say"].value != self.last_text:
-            self.text_queue.put(tts_node.attrs["to_say"].value)
-            self.last_text = tts_node.attrs["to_say"].value
-            console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
+            tts_node = self.g.get_node("TTS")
+            if tts_node.attrs["to_say"].value != self.last_text and tts_node.attrs["to_say"].value != "":
+                self.text_queue.put(tts_node.attrs["to_say"].value)
+                self.last_text = tts_node.attrs["to_say"].value
+                console.print(f"UPDATE NODE ATT: {id} {attribute_names}", style='green')
+            else:
+                pass
         else:
             pass
 

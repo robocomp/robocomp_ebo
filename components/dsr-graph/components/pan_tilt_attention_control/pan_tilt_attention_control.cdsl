@@ -1,9 +1,0 @@
-Component pan_tilt_attention_control
-{
-	Communications
-	{
-	};
-	language Cpp11;
-    gui Qt(QMainWindow);
-	options dsr;
-};

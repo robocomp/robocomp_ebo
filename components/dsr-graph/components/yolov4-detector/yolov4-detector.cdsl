@@ -1,9 +1,0 @@
-Component yolov4_detector
-{
-	Communications
-	{
-	};
-	language Cpp11;
-    gui Qt(QMainWindow);
-	options dsr;
-};

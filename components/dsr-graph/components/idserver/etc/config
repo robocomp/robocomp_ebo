@@ -18,7 +18,6 @@ dsr_input_file = ebo_scene.json
 
 
 
-
 tree_view = false
 graph_view = true
 2d_view = false

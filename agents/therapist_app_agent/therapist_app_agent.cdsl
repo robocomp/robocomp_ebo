@@ -1,0 +1,10 @@
+Component therapist_app_agent
+{
+    Communications
+    {
+    };
+    language python;
+    gui Qt(QWidget);
+    options dsr;
+};
+

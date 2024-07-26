@@ -1,8 +1,10 @@
 /home/robolab/robocomp/components/dsr-graph/components/idserver/src/idserver_autogen/EWIEGA46WW/moc_specificmonitor.cpp: /home/robolab/robocomp/components/dsr-graph/components/idserver/src/specificmonitor.h \
   /home/robolab/robocomp/components/dsr-graph/components/idserver/src/idserver_autogen/moc_predefs.h \
+  /home/robolab/robocomp_ws/src/robocomp/components/dsr-graph/components/idserver/src/CommonBehavior.h \
   /home/robolab/robocomp_ws/src/robocomp/components/dsr-graph/components/idserver/src/config.h \
   /home/robolab/robocomp_ws/src/robocomp/components/dsr-graph/components/idserver/src/genericmonitor.h \
   /home/robolab/robocomp_ws/src/robocomp/components/dsr-graph/components/idserver/src/genericworker.h \
+  /home/robolab/robocomp_ws/src/robocomp/components/dsr-graph/components/idserver/src/ui_mainUI.h \
   /home/robolab/robocomp_ws/src/robocomp/robocomp_core/classes/qlog/qlog.h \
   /usr/include/GL/gl.h \
   /usr/include/Ice/Application.h \
@@ -449,6 +451,7 @@
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QSize \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QSizeF \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QStringList \
+  /usr/include/x86_64-linux-gnu/qt6/QtCore/QVariant \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QtCore \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QtCoreDepends \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qabstractanimation.h \
@@ -656,6 +659,7 @@
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qwaitcondition.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qwineventnotifier.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qxmlstream.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtGui/QAction \
   /usr/include/x86_64-linux-gnu/qt6/QtGui/QPaintDevice \
   /usr/include/x86_64-linux-gnu/qt6/QtGui/QPaintDeviceWindow \
   /usr/include/x86_64-linux-gnu/qt6/QtGui/QSurfaceFormat \
@@ -771,6 +775,21 @@
   /usr/include/x86_64-linux-gnu/qt6/QtGui/qvectornd.h \
   /usr/include/x86_64-linux-gnu/qt6/QtGui/qwindow.h \
   /usr/include/x86_64-linux-gnu/qt6/QtGui/qwindowdefs.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QApplication \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QMainWindow \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QMenuBar \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QStatusBar \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QWidget \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qapplication.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qmainwindow.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qmenu.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qmenubar.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qsizepolicy.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstatusbar.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qtabwidget.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qtwidgets-config.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qtwidgetsglobal.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qwidget.h \
   /usr/include/x86_64-linux-gnu/sys/cdefs.h \
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/syscall.h \

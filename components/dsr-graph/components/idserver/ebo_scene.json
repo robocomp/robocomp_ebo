@@ -13,11 +13,11 @@
                     },
                     "pos_x": {
                         "type": 2,
-                        "value": 14.705086
+                        "value": -2.369606
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": -180.877975
+                        "value": -108.561661
                     }
                 },
                 "id": "100",
@@ -51,6 +51,13 @@
                         "linkAttribute": {
                         },
                         "src": "100"
+                    },
+                    {
+                        "dst": "185467123974275081",
+                        "label": "has",
+                        "linkAttribute": {
+                        },
+                        "src": "100"
                     }
                 ],
                 "name": "root",
@@ -76,7 +83,7 @@
                     },
                     "memory_usage": {
                         "type": 6,
-                        "value": 187576
+                        "value": 185224
                     },
                     "num_procs": {
                         "type": 6,
@@ -88,19 +95,19 @@
                     },
                     "pos_x": {
                         "type": 2,
-                        "value": 97.180153
+                        "value": -2.254778
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": -35.165619
+                        "value": -8.046995
                     },
                     "timestamp_agent": {
                         "type": 7,
-                        "value": "1717053980492862871"
+                        "value": "1720006416219159984"
                     },
                     "timestamp_alivetime": {
                         "type": 7,
-                        "value": "118"
+                        "value": "1720006416"
                     },
                     "timestamp_creation": {
                         "type": 7,
@@ -125,11 +132,11 @@
                     },
                     "pos_x": {
                         "type": 2,
-                        "value": -226.666199
+                        "value": -273.872681
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": 120.424088
+                        "value": 139.507553
                     }
                 },
                 "id": "180513894102466571",
@@ -146,11 +153,11 @@
                     },
                     "pos_x": {
                         "type": 2,
-                        "value": -153.005417
+                        "value": -178.11525
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": 118.096985
+                        "value": 138.184845
                     },
                     "texto": {
                         "type": 0,
@@ -167,11 +174,11 @@
                 "attribute": {
                     "pos_x": {
                         "type": 2,
-                        "value": -80.999519
+                        "value": -98.074196
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": 120.150528
+                        "value": 138.229614
                     },
                     "to_say": {
                         "type": 0,
@@ -183,6 +190,31 @@
                 ],
                 "name": "TTS",
                 "type": "tts"
+            },
+            "185467123974275081": {
+                "attribute": {
+                    "automatic_mode": {
+                        "type": 4,
+                        "value": false
+                    },
+                    "game_active": {
+                        "type": 4,
+                        "value": false
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": -1.918816
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -244.725845
+                    }
+                },
+                "id": "185467123974275081",
+                "links": [
+                ],
+                "name": "Therapist",
+                "type": "asr"
             },
             "200": {
                 "attribute": {
@@ -212,11 +244,11 @@
                     },
                     "pos_x": {
                         "type": 2,
-                        "value": -155.453766
+                        "value": -156.458176
                     },
                     "pos_y": {
                         "type": 2,
-                        "value": -42.01453
+                        "value": -9.873945
                     },
                     "robot_ref_adv_speed": {
                         "type": 2,
