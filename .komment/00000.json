@@ -1,0 +1,2631 @@
+[
+  {
+    "name": "genericworker.py",
+    "path": "agents/therapist_app_agent/src/genericworker.py",
+    "content": {
+      "structured": {
+        "description": "A GUI application using PySide2 and Ice libraries for building a RoboComp system. It creates a generic worker class that inherits from QtWidgets.QWidget and uses Qt's signal-slot mechanism. The worker class initializes a UI dialog with setupUi method and sets up a timer to emit signals at specified intervals.",
+        "items": [
+          {
+            "id": "9ae59983-e17b-b883-c344-99ea46ef9a22",
+            "ancestors": [],
+            "description": "Manages a worker process with a periodic timer and provides methods to set the timer period and kill the process. It also displays a graphical user interface using the `QtWidgets.QWidget` and `Ui_guiDlg`.",
+            "attributes": [
+              {
+                "name": "kill",
+                "type_name": "QtCoreSignal",
+                "description": "Named kill. It is emitted by the `killYourSelf` method when it is called. This signal is used to kill the worker instance."
+              },
+              {
+                "name": "ui",
+                "type_name": "Ui_guiDlg",
+                "description": "Initialized by calling the `setupUi` method on it, which presumably sets up a user interface for the widget."
+              },
+              {
+                "name": "show",
+                "type_name": "None",
+                "description": "Inherited from its superclass `QtWidgets.QWidget`. It displays the widget on screen. In this context, it is called to make the widget visible when an instance of `GenericWorker` is created in its constructor."
+              },
+              {
+                "name": "mutex",
+                "type_name": "QtCoreQMutex",
+                "description": "Initialized with a recursive mutex. This allows multiple threads to lock the same mutex recursively without causing deadlocks."
+              },
+              {
+                "name": "Period",
+                "type_name": "int",
+                "description": "30 by default, representing a time period in milliseconds. It is used as the interval for triggering events in the QTimer instance of the same class."
+              },
+              {
+                "name": "timer",
+                "type_name": "QtCoreQTimer|QtWidgetsQWidget",
+                "description": "Set to start at a specific period defined by the Period attribute after the setPeriod method is called."
+              }
+            ],
+            "name": "GenericWorker",
+            "location": {
+              "start": 43,
+              "insert": 45,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 27,
+            "docLength": null
+          },
+          {
+            "id": "9d3b6200-7556-0291-e14c-6e4ed7690612",
+            "ancestors": [
+              "9ae59983-e17b-b883-c344-99ea46ef9a22"
+            ],
+            "description": "Initializes an instance of a worker, setting up its user interface and timer. It also creates a mutex for synchronization and sets various properties such as Period. The UI is set up with setupUi, and the window is made visible using show.",
+            "params": [
+              {
+                "name": "mprx",
+                "type_name": "object",
+                "description": "Passed to the class constructor. It represents an instance of some class, likely an object that provides some functionality or data needed by the `GenericWorker` object."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = GenericWorker(mprx)\nworker.killYourSelf.connect(worker.killYourSelf) # Connect signal to slot for killing itself\nworker.setPeriod(60)  # Set period in milliseconds",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 47,
+              "insert": 48,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 10,
+            "docLength": null
+          },
+          {
+            "id": "b6949188-c62a-c584-004a-b3d249b2133b",
+            "ancestors": [
+              "9ae59983-e17b-b883-c344-99ea46ef9a22"
+            ],
+            "description": "Emits a signal named `self.kill` after logging a debug message, indicating an intention to terminate itself. This functionality is typically used for self-interruption or cancellation of the worker's task.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "generic_worker = GenericWorker(mprx)\n# ...\ngeneric_worker.killYourSelf()\n",
+              "description": "\nThis code assumes that mprx is a valid argument for the initialization of the GenericWorker class."
+            },
+            "name": "killYourSelf",
+            "location": {
+              "start": 60,
+              "insert": 62,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "cb2b2980-a6df-2cbf-2a46-4754027d6508",
+            "ancestors": [
+              "9ae59983-e17b-b883-c344-99ea46ef9a22"
+            ],
+            "description": "Sets a new period and restarts a timer. The method takes an integer as input, prints a message indicating the change, updates the internal `Period` attribute, and then starts the timer with the updated period.",
+            "params": [
+              {
+                "name": "p",
+                "type_name": "int",
+                "description": "Not used directly. It will be assigned to the object's attribute `self.Period`. The `@QtCore.Slot(int)` decorator specifies that this slot expects an integer as its argument."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = GenericWorker(mprx)\nworker.setPeriod(1000)  # Change period to 1 second",
+              "description": ""
+            },
+            "name": "setPeriod",
+            "location": {
+              "start": 67,
+              "insert": 69,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 5,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "interfaces.py",
+    "path": "agents/therapist_app_agent/src/interfaces.py",
+    "content": {
+      "structured": {
+        "description": "Several classes that interact with IceStorm, a publish-subscribe messaging middleware, and Ice, an Object Request Broker (ORB). It initializes an Ice connector based on a configuration file and uses it to create adapters, proxies, and subscribe/unsubscribe from topics. The Publishes class manages the publication of topics, Requires manages remote object connections, Subscribes creates adapters for subscribed topics, Implements creates adapters for interfaces, and InterfaceManager coordinates the initialization of these classes.",
+        "items": [
+          {
+            "id": "619c6718-1ddc-14b0-5a41-7e15180c2317",
+            "ancestors": [],
+            "description": "Manages communication between clients and topics using IceStorm, a Publish-Subscribe messaging system. It creates and retrieves topics, establishes connections with them, and returns a map of proxies for accessing these topics.",
+            "attributes": [
+              {
+                "name": "ice_connector",
+                "type_name": "IceConnector",
+                "description": "Initialized during object creation through the constructor method `__init__`. It represents a connection to the ICE (Internet Communications Engine) service, which facilitates communication between distributed objects."
+              },
+              {
+                "name": "mprx",
+                "type_name": "Dict[str,Any]",
+                "description": "Used to store proxies for topics as key-value pairs where keys are topic names and values are corresponding proxies obtained from IceStorm's topic manager."
+              },
+              {
+                "name": "topic_manager",
+                "type_name": "IceStormTopicManager",
+                "description": "Used to manage topics, including retrieving and creating them. It allows accessing and controlling topic operations such as publishing and subscribing."
+              }
+            ],
+            "name": "Publishes",
+            "location": {
+              "start": 13,
+              "insert": 14,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 28,
+            "docLength": null
+          },
+          {
+            "id": "30e64f4f-ea7a-fe90-2748-e5dd74ba82ba",
+            "ancestors": [
+              "619c6718-1ddc-14b0-5a41-7e15180c2317"
+            ],
+            "description": "Initializes an object with two attributes: `ice_connector` and `topic_manager`, as well as an empty dictionary `mprx`. This sets up the object's state for further usage.",
+            "params": [
+              {
+                "name": "ice_connector",
+                "type_name": "object",
+                "description": "Expected to be an instance of some class, likely related to ICE (Interoperable Communications Engine), which allows for communication between processes or applications."
+              },
+              {
+                "name": "topic_manager",
+                "type_name": "object",
+                "description": "Assigned to an instance variable named `self.topic_manager`. It represents an object responsible for managing topics, possibly related to the Ice Connector and its usage."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "publishes = Publishes(ice_connector, topic_manager)\n",
+              "description": "\n\nNote: Replace ice_connector and topic_manager with actual instances of the required types."
+            },
+            "name": "__init__",
+            "location": {
+              "start": 14,
+              "insert": 15,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "d48500e1-d66c-99af-9f42-b3ad637ae75f",
+            "ancestors": [
+              "619c6718-1ddc-14b0-5a41-7e15180c2317"
+            ],
+            "description": "Retrieves, creates or checks for an existing IceStorm topic with the given name. If the topic exists, it gets its publisher and sets up an oneway proxy to this publisher using the provided ice_proxy.",
+            "params": [
+              {
+                "name": "topic_name",
+                "type_name": "str",
+                "description": "Used as an identifier to retrieve or create a topic using the `self.topic_manager`. It is expected to be the name of a valid IceStorm topic."
+              },
+              {
+                "name": "ice_proxy",
+                "type_name": "Ice.ObjectProxy",
+                "description": "Used to unchecked cast the returned publisher's proxy to an ObjectProxy for further use."
+              }
+            ],
+            "returns": {
+              "type_name": "proxy",
+              "description": "A reference to an object that implements the interface specified by `ice_proxy`. This proxy allows clients to send requests to the topic publisher without blocking for a response."
+            },
+            "usage": {
+              "language": "python",
+              "code": "publishes = Publishes(ice_connector, topic_manager)\nproxy1 = publishes.create_topic(\"topic1\", ice_proxy)\nproxy2 = publishes.create_topic(\"topic2\", ice_proxy)\nproxies_map = publishes.get_proxies_map()\n",
+              "description": "\n\nThis example creates two instances of the `Publishes` class and uses them to create proxies for two topics named \"topic1\" and \"topic2\". The `get_proxies_map` method is then used to retrieve the map of topic names and their corresponding proxies."
+            },
+            "name": "create_topic",
+            "location": {
+              "start": 20,
+              "insert": 22,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 18,
+            "docLength": null
+          },
+          {
+            "id": "6ad1cb56-3543-df97-cc45-baa24f4f6381",
+            "ancestors": [],
+            "description": "Creates a map of proxies for Ice (Internet Communications Engine) properties and provides methods to get and create these proxies. It uses an `ice_connector` object to retrieve property values and convert them into proxies.",
+            "attributes": [
+              {
+                "name": "ice_connector",
+                "type_name": "IceConnection",
+                "description": "Initialized in the constructor. It serves as a bridge to interact with Ice objects by providing methods for getting properties, converting strings to proxies, and unchecked casting proxies."
+              },
+              {
+                "name": "mprx",
+                "type_name": "Dict[str,object]",
+                "description": "Initialized as an empty dictionary. It stores proxies for properties retrieved from the ICE connector. The keys are property names and values are corresponding proxies."
+              }
+            ],
+            "name": "Requires",
+            "location": {
+              "start": 44,
+              "insert": 45,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 23,
+            "docLength": null
+          },
+          {
+            "id": "502802df-80bd-2886-7346-dd159347a842",
+            "ancestors": [
+              "6ad1cb56-3543-df97-cc45-baa24f4f6381"
+            ],
+            "description": "Initializes an instance with an Ice connector and an empty dictionary `mprx`, which presumably stores some data or configuration related to the Ice connection.",
+            "params": [
+              {
+                "name": "ice_connector",
+                "type_name": "object",
+                "description": "Assigned to an instance variable with the same name. The purpose or definition of this parameter is not provided, but it likely represents an object that facilitates communication between different components."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "requires = Requires(Ice.initialize().options())\nproxy_map = requires.get_proxies_map()\n",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 45,
+              "insert": 46,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 3,
+            "docLength": null
+          },
+          {
+            "id": "edb32cc6-7c3c-fcbe-d74b-defdf1324044",
+            "ancestors": [
+              "6ad1cb56-3543-df97-cc45-baa24f4f6381"
+            ],
+            "description": "Creates and registers an Ice proxy object for a given property name from an Ice connector. It tries to get the property, convert it to a proxy, cast it to the expected type using uncheckedCast, and store it in a dictionary.",
+            "params": [
+              {
+                "name": "property_name",
+                "type_name": "str",
+                "description": "Used to specify the name of a property that needs to be retrieved from the Ice connector and converted into a proxy object."
+              },
+              {
+                "name": "ice_proxy",
+                "type_name": "Ice.ObjectProxy",
+                "description": "Used to uncheck-cast the base proxy obtained from the property returned by `self.ice_connector.getProperties().getProperty(property_name)` into an instance of the specific object class."
+              }
+            ],
+            "returns": {
+              "type_name": "Tuple[bool,None|Proxy]",
+              "description": "2-element tuple where first element is a boolean indicating success (True) or failure (False) and second element is either None if the proxy creation failed or actual Proxy object if successful."
+            },
+            "usage": {
+              "language": "python",
+              "code": "ice_connector = ... # Initialize ice_connector\nrequires = Requires(ice_connector)\nproperty_name = 'CameraSimple'\nice_proxy = ... # Initialize ice_proxy\nsuccess, proxy = requires.create_proxy(property_name, ice_proxy)\nif success:\n    proxies_map = requires.get_proxies_map()\n    print(proxies_map)",
+              "description": ""
+            },
+            "name": "create_proxy",
+            "location": {
+              "start": 52,
+              "insert": 54,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 15,
+            "docLength": null
+          },
+          {
+            "id": "cfda2a13-fd2e-2fa7-4848-d7a2beab4cee",
+            "ancestors": [],
+            "description": "Creates an Ice object adapter and subscribes it to a topic managed by the `topic_manager`. It retrieves or creates the topic if necessary, and sets up the subscription with a given handler. The subscription is activated after successful creation.",
+            "attributes": [
+              {
+                "name": "ice_connector",
+                "type_name": "object",
+                "description": "Initialized through the constructor (`__init__`) by passing an `Ice.Connector` object, which represents a connection to the Ice grid."
+              },
+              {
+                "name": "topic_manager",
+                "type_name": "object",
+                "description": "Presumably responsible for managing Ice Topic objects. It provides methods to retrieve, create and manipulate topics. The exact implementation details are not provided."
+              }
+            ],
+            "name": "Subscribes",
+            "location": {
+              "start": 71,
+              "insert": 72,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 28,
+            "docLength": null
+          },
+          {
+            "id": "16054d96-381a-e98d-574c-4d64b048af4f",
+            "ancestors": [
+              "cfda2a13-fd2e-2fa7-4848-d7a2beab4cee"
+            ],
+            "description": "Initializes objects of Ice Connector, Topic Manager, and Default Handler as instance variables when an object of the class is created. These objects are used for subscribing to topics and handling events in the class.",
+            "params": [
+              {
+                "name": "ice_connector",
+                "type_name": "object",
+                "description": "Likely an instance of an Ice Connector class, responsible for establishing connections to other Ice components or clients."
+              },
+              {
+                "name": "topic_manager",
+                "type_name": "object",
+                "description": "Assigned to an instance variable with the same name. It appears to be responsible for managing topics, likely in the context of message-oriented middleware or distributed systems."
+              },
+              {
+                "name": "default_handler",
+                "type_name": "object",
+                "description": "Likely used as a default handler for events that do not have an assigned handler. It is stored in the instance of the class as an attribute."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "ice_connector = Ice.createConnection()\ntopic_manager = TopicManager()\ndefault_handler = MyHandler()\n\nsubscribes = Subscribes(ice_connector, topic_manager, default_handler)\n",
+              "description": "\nIn this example, `Subscribes` is instantiated with the provided values for `ice_connector`, `topic_manager`, and `default_handler`."
+            },
+            "name": "__init__",
+            "location": {
+              "start": 72,
+              "insert": 73,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 3,
+            "docLength": null
+          },
+          {
+            "id": "334b245a-a8fb-c792-9c4f-0af0e0cfbe9d",
+            "ancestors": [
+              "cfda2a13-fd2e-2fa7-4848-d7a2beab4cee"
+            ],
+            "description": "Creates an object adapter from an ice_connector, subscribes to a topic using the interface_handler and returns the created adapter. It handles errors while creating or retrieving topics and ensures the adapter is activated after subscription.",
+            "params": [
+              {
+                "name": "property_name",
+                "type_name": "str",
+                "description": "Used to create an object adapter with a specific name from Ice's ObjectAdapter class. The name of the topic, after removing 'Topic' prefix, is also set as `topic_name`."
+              },
+              {
+                "name": "interface_handler",
+                "type_name": "Ice.Object",
+                "description": "Passed to the add method of the created object adapter. It represents the actual implementation of an interface provided by the object that will be proxied through the adapter."
+              }
+            ],
+            "returns": {
+              "type_name": "ObjectAdapter",
+              "description": "Created using `self.ice_connector.createObjectAdapter(property_name)`."
+            },
+            "usage": {
+              "language": "python",
+              "code": "subscribe = Subscribes(ice_connector, topic_manager, default_handler)\nadapter = subscribe.create_adapter('myTopic', my_handler)",
+              "description": ""
+            },
+            "name": "create_adapter",
+            "location": {
+              "start": 76,
+              "insert": 77,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 23,
+            "docLength": null
+          },
+          {
+            "id": "2cfd2c44-5749-f9ba-0245-bbd17946b04c",
+            "ancestors": [],
+            "description": "Creates an object adapter from a property name and interface handler, adds the handler to the adapter with a specified identity, and activates the adapter. It is used for implementing interfaces on objects using ICE (Internet Communications Engine).",
+            "attributes": [
+              {
+                "name": "ice_connector",
+                "type_name": "object",
+                "description": "Initialized during the constructor call with a specific value, which is expected to be of type `Ice.Connection`. This attribute provides functionality for creating Ice objects adapters."
+              }
+            ],
+            "name": "Implements",
+            "location": {
+              "start": 101,
+              "insert": 102,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 8,
+            "docLength": null
+          },
+          {
+            "id": "be03e3b8-751b-2dbb-8e4f-8a7bd64fb350",
+            "ancestors": [
+              "2cfd2c44-5749-f9ba-0245-bbd17946b04c"
+            ],
+            "description": "Creates an object adapter using a specified property name and interface handler, adds the interface handler to the adapter with a specific identity based on the property name, and activates the adapter.",
+            "params": [
+              {
+                "name": "property_name",
+                "type_name": "str",
+                "description": "Used to create an object adapter with the specified name using the ice_connector.createObjectAdapter method. The property name is converted to lowercase before being used as the identity for the adapter."
+              },
+              {
+                "name": "interface_handler",
+                "type_name": "Any",
+                "description": "Required. It represents an instance of the interface that needs to be adapted."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "ice_connector = Ice.initialize()\ndefault_handler = DefaultHandler()\nimplements = Implements(ice_connector, default_handler)\nadapter = implements.create_adapter(\"myAdapter\", MyInterface())\n",
+              "description": ""
+            },
+            "name": "create_adapter",
+            "location": {
+              "start": 105,
+              "insert": 106,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "b701ceda-439a-d683-084c-ca286ca4b5df",
+            "ancestors": [],
+            "description": "Initializes an Ice configuration file and establishes connections to a Topic Manager and other components. It manages proxies, publishes topics, subscribes to topics, and provides methods for setting default handlers and destroying the connection.",
+            "attributes": [
+              {
+                "name": "ice_config_file",
+                "type_name": "str",
+                "description": "Initialized during object creation, representing the path to a configuration file for ICE (Internet Communications Engine). It is used to initialize the ICE connector and topic manager."
+              },
+              {
+                "name": "ice_connector",
+                "type_name": "Iceobject",
+                "description": "Initialized with the result of a call to `Ice.initialize(self.ice_config_file)` in the constructor."
+              },
+              {
+                "name": "topic_manager",
+                "type_name": "IceStormTopicManagerPrx|None",
+                "description": "Initialized by calling the `init_topic_manager` method if a specific property \"TopicManager.Proxy\" exists in the ice config file, or None otherwise."
+              },
+              {
+                "name": "init_topic_manager",
+                "type_name": "methodTopicManagerPrx",
+                "description": "Used to initialize a topic manager."
+              },
+              {
+                "name": "status",
+                "type_name": "int",
+                "description": "0 by default, indicating its initial state. The purpose or meaning of this attribute is unclear from the provided code snippet."
+              },
+              {
+                "name": "parameters",
+                "type_name": "Dict[str,str]",
+                "description": "Initialized by iterating through the properties provided by the Ice connector in the constructor. It stores the property names as keys and their corresponding values as values."
+              },
+              {
+                "name": "requires",
+                "type_name": "Requires",
+                "description": "Initialized with a call to its constructor, passing the `self.ice_connector` as an argument. It appears to be used for managing proxies related to required interfaces."
+              },
+              {
+                "name": "publishes",
+                "type_name": "Publishes|None",
+                "description": "Initialized with an instance of class Publishes when the InterfaceManager object is created. It handles publishing to topics using IceStorm."
+              },
+              {
+                "name": "implements",
+                "type_name": "Implements|None",
+                "description": "Set to a new instance of Implements when `set_default_handler` method is called. It represents the interface that this object implements."
+              },
+              {
+                "name": "subscribes",
+                "type_name": "Subscribes|None",
+                "description": "Initialized by calling the `set_default_handler` method, which initializes it with a Subscribes object for subscribing to topics managed by IceStorm's Topic Manager."
+              }
+            ],
+            "name": "InterfaceManager",
+            "location": {
+              "start": 111,
+              "insert": 112,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 40,
+            "docLength": null
+          },
+          {
+            "id": "efe8b54e-48ec-1f86-9940-70d617de645d",
+            "ancestors": [
+              "b701ceda-439a-d683-084c-ca286ca4b5df"
+            ],
+            "description": "Initializes an instance by setting its properties, connecting to Ice, and creating instances of other classes based on the configuration file provided.",
+            "params": [
+              {
+                "name": "ice_config_file",
+                "type_name": "str",
+                "description": "Used to initialize Ice, which is an open-source, cross-platform middleware infrastructure for building distributed systems. It specifies the configuration file for the Ice application."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "manager = InterfaceManager(\"path_to_ice_config_file\")\n",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 112,
+              "insert": 114,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 14,
+            "docLength": null
+          },
+          {
+            "id": "8d170904-9e76-e1bb-e442-6d97d0565a8e",
+            "ancestors": [
+              "b701ceda-439a-d683-084c-ca286ca4b5df"
+            ],
+            "description": "Initializes and checks the connection to a TopicManager proxy from an IceStorm service. If the connection fails, it logs an error message and exits with a status code -1.",
+            "params": [],
+            "returns": {
+              "type_name": "IceStormTopicManagerPrx",
+              "description": "A proxy object that represents a Topic Manager, an interface to manage topics for publishing and subscribing messages."
+            },
+            "usage": {
+              "language": "python",
+              "code": "interface_manager = InterfaceManager('path_to_your_ice_config_file')\ntopic_manager_proxy = interface_manager.init_topic_manager()\n",
+              "description": ""
+            },
+            "name": "init_topic_manager",
+            "location": {
+              "start": 130,
+              "insert": 132,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 8,
+            "docLength": null
+          },
+          {
+            "id": "a0af7fc0-f2ab-a9a0-9948-8414b789edff",
+            "ancestors": [
+              "b701ceda-439a-d683-084c-ca286ca4b5df"
+            ],
+            "description": "Sets up two objects: Implements and Subscribes. The Implements object initializes with the ICE connector and a handler, while the Subscribes object is initialized with the ICE connector, topic manager, and the same handler.",
+            "params": [
+              {
+                "name": "handler",
+                "type_name": "Any",
+                "description": "Used to set default handlers for implementing interfaces. It is passed to the constructors of `Implements` and `Subscribes` classes to associate it with instances of these classes."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "manager = InterfaceManager('path_to_your_ice_config_file')\ndef handler():\n    # your logic for handling here\n    pass\nmanager.set_default_hanlder(handler)",
+              "description": ""
+            },
+            "name": "set_default_hanlder",
+            "location": {
+              "start": 140,
+              "insert": 141,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          },
+          {
+            "id": "23e35664-190d-949e-c64f-b989242363df",
+            "ancestors": [
+              "b701ceda-439a-d683-084c-ca286ca4b5df"
+            ],
+            "description": "Aggregates two proxy maps: one from `self.requires` and another from `self.publishes`, then returns the merged map.",
+            "params": [],
+            "returns": {
+              "type_name": "Dict[Any,Any]",
+              "description": "A mapping object that returns a proxy map by combining the results of calling `get_proxies_map` on `self.requires` and `self.publishes`."
+            },
+            "usage": {
+              "language": "python",
+              "code": "manager = InterfaceManager('path_to_config_file')\nproxies_map = manager.get_proxies_map()\n",
+              "description": ""
+            },
+            "name": "get_proxies_map",
+            "location": {
+              "start": 144,
+              "insert": 145,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 5,
+            "docLength": null
+          },
+          {
+            "id": "1ed9b267-cfc7-0189-054e-878326b169b6",
+            "ancestors": [
+              "b701ceda-439a-d683-084c-ca286ca4b5df"
+            ],
+            "description": "Destroys an ICE (Interactive Connectivity Establishment) connector object if it exists, effectively releasing any system resources associated with it and terminating its functionality.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "manager = InterfaceManager('path_to_config_file')\n# Use manager for some time\nmanager.destroy()\n",
+              "description": "\nNote: The 'path_to_config_file' should be replaced with actual file path."
+            },
+            "name": "destroy",
+            "location": {
+              "start": 150,
+              "insert": 151,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "specificworker.py",
+    "path": "agents/therapist_app_agent/src/specificworker.py",
+    "content": {
+      "structured": {
+        "description": "A specific worker class that is part of a larger robot control system called RoboComp. The worker class is responsible for managing and controlling various components within the system, including a graphical user interface (GUI) and several nodes in a graph data structure (DSR). It uses several packages such as PySide2, PyQt5, rich, and pydsr to create the GUI and interact with the DSR.",
+        "items": [
+          {
+            "id": "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa",
+            "ancestors": [],
+            "description": "Initializes a worker for a specific agent, connects signals and slots, starts a timer, sets up combo boxes, and provides methods for starting a game, launching the DSR graph, and handling node updates.",
+            "attributes": [
+              {
+                "name": "Period",
+                "type_name": "int",
+                "description": "2000 by default, indicating the time interval in milliseconds after which the worker's compute method is called using a QTimer."
+              },
+              {
+                "name": "main_window",
+                "type_name": "QWidget",
+                "description": "Initialized in the `__init__` method. It appears to be the main window of the application, but its role in the context of the `SpecificWorker` class is unclear without more information about the overall architecture."
+              },
+              {
+                "name": "agent_id",
+                "type_name": "int",
+                "description": "9 by default, set in the `__init__` method. It seems to be used as a unique identifier for this specific worker agent."
+              },
+              {
+                "name": "g",
+                "type_name": "DSRGraph",
+                "description": "Initialized with a node ID of 0, a name of \"pythonAgent\", and the agent ID of 9. It seems to be used for managing nodes and edges in a graph."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "Used to perform a startup check operation when its value is True, which involves stopping the application after a delay of 200 milliseconds using `QTimer.singleShot`."
+              },
+              {
+                "name": "timer",
+                "type_name": "QTimer",
+                "description": "Started with a period of `self.Period` (2000 milliseconds) in its `__init__` method. The `compute` method is connected to this timer, which means it will be executed periodically."
+              },
+              {
+                "name": "compute",
+                "type_name": "QtCoreSlot",
+                "description": "Bound to a method with the same name. The method does not have any side effects, as it always returns True."
+              },
+              {
+                "name": "ui",
+                "type_name": "object",
+                "description": "Not defined in this code snippet. It seems to be a UI element, possibly from PyQt or another GUI library, but its definition is missing."
+              },
+              {
+                "name": "iniciarJuego",
+                "type_name": "Callable[[QWidget],None]",
+                "description": "Associated with a QPushButton in the UI. It gets triggered when the 'Iniciar J' button is clicked, prompting the user to start a game."
+              }
+            ],
+            "name": "SpecificWorker",
+            "location": {
+              "start": 46,
+              "insert": 47,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 121,
+            "docLength": null
+          },
+          {
+            "id": "3858ecce-d530-058f-0447-68f144941f2c",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Initializes an instance with a proxy map, sets up GUI components, connects signals to methods for handling graph updates and game initialization, and starts a timer for periodic computations.",
+            "params": [
+              {
+                "name": "proxy_map",
+                "type_name": "Dict[str, any]",
+                "description": "Passed to the superclass method `super(SpecificWorker, self).__init__(proxy_map)`, indicating that it represents a mapping from proxy objects to their corresponding worker processes."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "Set to `False` by default. It determines whether the `startup_check` method should be called or not, effectively controlling the flow of execution."
+              },
+              {
+                "name": "parent",
+                "type_name": "QWidget | None",
+                "description": "Passed as an argument when creating an instance of SpecificWorker. It represents the parent widget of the specific worker, which defaults to None if not provided."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map=True, startup_check=False)\n",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 47,
+              "insert": 48,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 36,
+            "docLength": null
+          },
+          {
+            "id": "86e3e6a6-314b-3db7-f346-d1434b3d57a9",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Initiates a game by displaying a modal dialog asking if the user wants to start the selected game with the chosen player. The dialog has two buttons: \"Sí\" (Yes) and \"No\".",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "specific_worker = SpecificWorker(proxy_map)\nspecific_worker.main_window.show()\n",
+              "description": "\n\nNote that this example does not simulate user interaction, but simply creates a window with combo boxes for users to select their preferences."
+            },
+            "name": "iniciarJuego",
+            "location": {
+              "start": 93,
+              "insert": 94,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 19,
+            "docLength": null
+          },
+          {
+            "id": "91372451-9342-e8a9-2e4a-88c4d4c2ddc6",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Initiates a game for a given user and game, confirms the initiation with a separate dialog box (`dlg`), and then accepts the confirmation through a call to `dlg.accept()`.",
+            "params": [
+              {
+                "name": "usuario",
+                "type_name": "object",
+                "description": "Passed to this method along with `juego` and `dlg`. It represents an instance of a user, likely used for identifying the player in the game."
+              },
+              {
+                "name": "juego",
+                "type_name": "object",
+                "description": "Expected to be a reference to an instance of a class representing a game. It is used as input for initiating a game."
+              },
+              {
+                "name": "dlg",
+                "type_name": "QDialog",
+                "description": "Passed as an argument to the function. It seems that `dlg` represents a dialog box that needs to be accepted after certain actions have been confirmed."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "user = \"Enrique\"\ngame = \"Conversacional\"\ndlg = QDialog()\niniciarJuegoPulsado(self, user, game, dlg)",
+              "description": ""
+            },
+            "name": "iniciarJuegoPulsado",
+            "location": {
+              "start": 121,
+              "insert": 123,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          },
+          {
+            "id": "7d833078-27cc-4fbb-1246-7841d00d9e03",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Initiates a game with the specified juego and usuario, then launches a DS-R game mode using `lanzar_juego_dsr`. Following this, it executes a therapist-on-the-loop dialog in the main window.",
+            "params": [
+              {
+                "name": "usuario",
+                "type_name": "object",
+                "description": "Used to represent a user, which presumably plays or participates in the game `juego`. Its exact nature or properties are not specified within this code snippet."
+              },
+              {
+                "name": "juego",
+                "type_name": "str",
+                "description": "Expected to represent the name or identifier of the game being initiated."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(None, False)\nusuario = \"Enrique\"\njuego = \"Conversacional\"\nworker.iniciarJuegoConfirmado(usuario, juego)",
+              "description": ""
+            },
+            "name": "iniciarJuegoConfirmado",
+            "location": {
+              "start": 126,
+              "insert": 127,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "10962893-7e26-d4a3-824e-51fd44e786a9",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Determines the prompt for a game based on its type and sets an attribute \"in_llama\" on a node named \"LLM\" with the determined prompt, updating the graph if necessary.",
+            "params": [
+              {
+                "name": "juego",
+                "type_name": "str | \"Conversacional\" | \"Verdadero o Falso\"",
+                "description": "Used to determine which prompt should be assigned to the attribute."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "`False` if there is no LLM node in the graph or if it fails to modify the attribute of the LLN node, otherwise it doesn't explicitly return any value."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map)\njuego = \"Conversacional\"\nworker.lanzar_juego_dsr(juego)",
+              "description": ""
+            },
+            "name": "lanzar_juego_dsr",
+            "location": {
+              "start": 132,
+              "insert": 133,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 14,
+            "docLength": null
+          },
+          {
+            "id": "94f1412a-ea4f-98b2-504f-80ea5555578d",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Sets parameters without handling exceptions, returning `True` regardless of success or failure. This approach can mask potential errors and make debugging more challenging.",
+            "params": [
+              {
+                "name": "params",
+                "type_name": "Dict[any, any]",
+                "description": "Used to set parameters within an object or class. The exact meaning and usage of this parameter depend on the context in which it is called."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "`True`. This indicates that the operation was successful and there were no errors."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nparams = {\"param1\": \"value1\", \"param2\": \"value2\"}\nresult = worker.setParams(params)\n",
+              "description": ""
+            },
+            "name": "setParams",
+            "location": {
+              "start": 153,
+              "insert": 159,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "6d8a787b-6292-d898-dd44-adc9717c3d22",
+            "ancestors": [
+              "e13fe837-3e3a-dc9e-0e45-532b7f3fc4aa"
+            ],
+            "description": "Returns a boolean value, indicating successful computation. The method is decorated with the `@QtCore.Slot()` decorator, implying that it's designed to be executed as a slot in the Qt framework, likely within a larger computational context.",
+            "params": [],
+            "returns": {
+              "type_name": "bool",
+              "description": "1 (True) when executed, indicating that the computation was successful."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(None, True)\ntimer = QTimer()\ntimer.timeout.connect(worker.compute)\ntimer.start(2000)",
+              "description": ""
+            },
+            "name": "compute",
+            "location": {
+              "start": 162,
+              "insert": 166,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          },
+          {
+            "id": "2bfd5f58-dab7-2eba-af40-1a64ac572d98",
+            "ancestors": [],
+            "description": "Implements a graphical user interface for a conversation game between a therapist and a patient using natural language processing (NLP) techniques. It manages nodes and edges in a graph data structure, updating node attributes and handling button clicks to facilitate the conversation flow.",
+            "attributes": [
+              {
+                "name": "textoActualizado",
+                "type_name": "Signal[str]",
+                "description": "Used to emit signals with a string value when there are changes in text attributes of nodes \"LLM\" or \"ASR\"."
+              },
+              {
+                "name": "_next_agent_id",
+                "type_name": "int",
+                "description": "75 by default. It appears to be used as a counter for generating unique agent IDs when creating new instances of the class."
+              },
+              {
+                "name": "agent_id",
+                "type_name": "int",
+                "description": "75 by default, generated using the `_generate_agent_id` method."
+              },
+              {
+                "name": "_generate_agent_id",
+                "type_name": "int",
+                "description": "75 by default. It generates a new unique agent ID for each instance of the class and increments it for each subsequent call."
+              },
+              {
+                "name": "g",
+                "type_name": "DSRGraph",
+                "description": "Initialized with parameters (0, \"pythonAgent\", self.agent_id) in the __init__ method."
+              },
+              {
+                "name": "update_node_att",
+                "type_name": "None|int|list[str]",
+                "description": "Connected to the UPDATE_NODE_ATTR signal of the DSRGraph class. It updates node attributes based on the received signal."
+              },
+              {
+                "name": "ui",
+                "type_name": "QMainWindow",
+                "description": "Loaded from a UI file named 'therapist.ui' using the QUiLoader class. It represents the graphical user interface (GUI) of the application."
+              },
+              {
+                "name": "parent_window",
+                "type_name": "QMainWindow|None",
+                "description": "Set during the initialization of the class. It appears to represent the parent window of this dialog."
+              },
+              {
+                "name": "enviarTTS",
+                "type_name": "method",
+                "description": "Called when the \"Habla\" button is clicked. It sends a text to the node \"TTS\" with the value of the text from the \"Texto Hablado\" field."
+              },
+              {
+                "name": "enviarASR",
+                "type_name": "None|self,noreturnvalue",
+                "description": "Used to send the text from the UI's `textoEscuchado` plaintext edit to a node named \"LLM\" in the graph, updating its \"in_llama\" attribute."
+              },
+              {
+                "name": "finJuego",
+                "type_name": "None",
+                "description": "Connected with the `finJuego` method, which gets called when the corresponding button is clicked in the UI. This method sets various nodes and attributes to their initial state and closes the dialog."
+              },
+              {
+                "name": "autoModeStateChanged",
+                "type_name": "voidQtCheckStateNone",
+                "description": "Connected to the stateChanged signal of the ui.autoMode checkbox. It updates the automatic mode status in the graph and enables/disables buttons according to the new state."
+              },
+              {
+                "name": "last_tts",
+                "type_name": "str",
+                "description": "Used to store the last text-to-speech (TTS) output from the LLM node in the DSRGraph."
+              },
+              {
+                "name": "last_asr",
+                "type_name": "str",
+                "description": "Assigned the value of \"ASR\" node's \"texto\" attribute when it changes, indicating the last recognized speech. It keeps track of the most recent ASR output."
+              },
+              {
+                "name": "actualizar_texto_plaintextedit",
+                "type_name": "Slot[str]",
+                "description": "Used to update a plain text edit with a given text. It sets the text of either `self.ui.textoHablado` or `self.ui.textoEscuchado` based on the value of `self.cuadro`."
+              },
+              {
+                "name": "cuadro",
+                "type_name": "str|None",
+                "description": "Used to store the name of the text box where the received text should be displayed, which can either be \"textoHablado\" or \"textoEscuchado\"."
+              },
+              {
+                "name": "automatico",
+                "type_name": "bool",
+                "description": "Used to represent whether the game mode is set to automatic or not. It can be toggled on or off through the user interface, enabling or disabling certain functionality."
+              },
+              {
+                "name": "actualizar_nodo",
+                "type_name": "Nonebool",
+                "description": "A method used to update the attributes of nodes in the graph."
+              }
+            ],
+            "name": "TherapistOnTheLoop",
+            "location": {
+              "start": 198,
+              "insert": 199,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 172,
+            "docLength": null
+          },
+          {
+            "id": "93e38762-44af-20a4-2547-edfef2168510",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Initializes the object, generates an agent ID, creates a DSRGraph instance, connects signals for updating node attributes and handles UI elements' click events to send TTS and ASR requests, update text fields, and manage game state.",
+            "params": [
+              {
+                "name": "parent",
+                "type_name": "TherapistOnTheLoop | None",
+                "description": "Used to set the parent window for the current instance. It is passed as an argument when creating an object of this class."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "if __name__ == '__main__':\n    parent = None\n    therapist = TherapistOnTheLoop(parent)\n    therapist.show()\n",
+              "description": "\nNote: This code only demonstrates the usage of `TherapistOnTheLoop` without any additional functionality."
+            },
+            "name": "__init__",
+            "location": {
+              "start": 209,
+              "insert": 210,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 46,
+            "docLength": null
+          },
+          {
+            "id": "7eb9f65e-0091-dc83-634a-7a6a8ecb7605",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Updates a node with a text-to-speech (TTS) instruction, sets the UI to indicate waiting for new input, and disables buttons and text editing capabilities until new input is received.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.show()\ntherapist.ui.textoHablado.setPlainText(\"Hello, world!\")\ntherapist.ui.hablaButton.click()",
+              "description": ""
+            },
+            "name": "enviarTTS",
+            "location": {
+              "start": 264,
+              "insert": 265,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 7,
+            "docLength": null
+          },
+          {
+            "id": "d00fb383-bf64-eab7-c24c-331c639b9561",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Sends the text recognized by an Automatic Speech Recognition (ASR) system to a specified node, updates its internal state, disables some UI elements, and displays a waiting message.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "t = TherapistOnTheLoop()\nt.ui.textoEscuchado.setPlainText(\"Hello, world\")\nt.enviarASR()",
+              "description": ""
+            },
+            "name": "enviarASR",
+            "location": {
+              "start": 272,
+              "insert": 273,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 7,
+            "docLength": null
+          },
+          {
+            "id": "16cc8966-a961-7cbe-5f47-e7b259e340ae",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Prints a message indicating the game's end, then updates several nodes with specific values and sets certain flags to False, before closing the dialog box.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.show()\n# After some time...\ntherapist.finJuego()\n",
+              "description": "\nThis code creates a new instance of the `TherapistOnTheLoop` class, displays its user interface with `show()`, and then calls the `finJuego()` method after a period of interaction."
+            },
+            "name": "finJuego",
+            "location": {
+              "start": 280,
+              "insert": 281,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 10,
+            "docLength": null
+          },
+          {
+            "id": "04cbdd62-9aee-e28a-6144-f96322e803f1",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Updates the state of the automatic mode when the corresponding checkbox changes its state. If the mode is activated, it prints a message and enables/disables certain UI elements accordingly; if deactivated, it prints another message and updates the automatic mode state.",
+            "params": [
+              {
+                "name": "state",
+                "type_name": "Qt.Checked | Qt.Unchecked",
+                "description": "Passed to this method. It represents whether the automatic mode check box has been checked or unchecked, indicating its current state."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.ui.autoMode.setCheckState(Qt.Checked)",
+              "description": ""
+            },
+            "name": "autoModeStateChanged",
+            "location": {
+              "start": 292,
+              "insert": 293,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 13,
+            "docLength": null
+          },
+          {
+            "id": "1a01044f-9a0f-0f8b-2f42-bd5ac766b659",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Updates an existing node in a graph with a new attribute value. It retrieves a node by its identifier, sets the attribute if the node exists, and then updates the node in the graph.",
+            "params": [
+              {
+                "name": "nodo",
+                "type_name": "str | int",
+                "description": "Expected to be a valid node ID, either as a string or an integer, which identifies a node in the graph. It serves as an input for retrieving the corresponding node object from the graph."
+              },
+              {
+                "name": "atributo",
+                "type_name": "str | None",
+                "description": "Used to specify the attribute name to be updated for the given `nodo`. It represents the key for the attribute-value pair to be added or modified in the node's attributes."
+              },
+              {
+                "name": "valor",
+                "type_name": "str | int | bool",
+                "description": "Used to set an attribute value for a node. It represents the new value that will be assigned to the specified `atributo` of the `nodo`."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "0 (False). If the nodo does not exist in the graph, it prints a message and returns False; otherwise, it updates the node's attribute and returns without printing any messages."
+            },
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.actualizar_nodo(\"Therapist\", \"game_active\", True)\ntherapist.actualizar_nodo(\"TTS\", \"to_say\", \"Hello\")\ntherapist.actualizar_nodo(\"LLM\", \"in_llama\", \"World\")",
+              "description": ""
+            },
+            "name": "actualizar_nodo",
+            "location": {
+              "start": 306,
+              "insert": 307,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 8,
+            "docLength": null
+          },
+          {
+            "id": "93f040af-8dac-e39b-b941-db6c5e4bb264",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Enables two user interface elements (hablaButton and textoHablado) and sets a variable cuadro to \"textoHablado\". It then calls another method actualizar_texto_llm() to update the text.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.nuevo_lll_recibido()\n",
+              "description": "\nIn this case, the `nuevo_llm_recibido` method would enable the \"HablaButton\" and the \"textoHablado\" text box."
+            },
+            "name": "nuevo_llm_recibido",
+            "location": {
+              "start": 315,
+              "insert": 316,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 5,
+            "docLength": null
+          },
+          {
+            "id": "484e7172-7bcd-ce9a-6c45-e06916ae9f32",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Enables two UI components, sets a string variable to \"textoEscuchado\", and calls another method named `actualizar_texto_asr`. This function appears to be part of an audio recognition system, responding to new ASR (Automatic Speech Recognition) inputs.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.ui.textoEscuchado.setPlainText(\"Received ASR text\")\ntherapist.nuevo_asr_recibido()",
+              "description": ""
+            },
+            "name": "nuevo_asr_recibido",
+            "location": {
+              "start": 321,
+              "insert": 322,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 6,
+            "docLength": null
+          },
+          {
+            "id": "9d593404-2816-f7b9-1246-e751649a8adc",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Retrieves the value of an attribute called \"out_llama\" from a node labeled as \"LLM\" within a graph, and then emits this value to a signal named `textoActualizado`.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\nllm_node = therapist.g.get_node(\"LLM\")\ntexto = llm_node.attrs[\"out_llama\"].value\ntherapist.actualizar_texto_llm()",
+              "description": ""
+            },
+            "name": "actualizar_texto_llm",
+            "location": {
+              "start": 328,
+              "insert": 329,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "366781a6-aaa7-6183-2c4b-fe5f07b3c602",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Retrieves text from an attribute named \"texto\" within a node labeled \"ASR\" and emits this text as a signal to be handled by other parts of the application.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\nllm_node = therapist.g.get_node(\"ASR\")\ntexto = llm_node.attrs[\"texto\"].value\ntherapist.actualizar_texto_asr(texto)\n",
+              "description": ""
+            },
+            "name": "actualizar_texto_asr",
+            "location": {
+              "start": 333,
+              "insert": 334,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "5530b484-7555-8da5-9c47-2d305eec2ae3",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Updates the plain text content of either the `textoHablado` or `textoEscuchado` widgets, depending on the value of the `cuadro` attribute. If neither condition matches, it does nothing.",
+            "params": [
+              {
+                "name": "texto",
+                "type_name": "str",
+                "description": "Expected to be passed as an argument when this method is called, representing a string that will be set as plain text in one of the UI elements."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\ntherapist.ui.textoHablado.setPlainText(\"Hello, world!\")\ntherapist.actualizar_texto_plaintextedit(therapist.ui.textoHablado.toPlainText())",
+              "description": ""
+            },
+            "name": "actualizar_texto_plaintextedit",
+            "location": {
+              "start": 338,
+              "insert": 340,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 8,
+            "docLength": null
+          },
+          {
+            "id": "4a77357b-f9ec-4db9-6446-163bef336858",
+            "ancestors": [
+              "2bfd5f58-dab7-2eba-af40-1a64ac572d98"
+            ],
+            "description": "Updates the values of last ASR and TTS outputs from LLM and ASR nodes, respectively, when the therapist node is not in automatic mode, and resets these values when it is in automatic mode.",
+            "params": [
+              {
+                "name": "id",
+                "type_name": "int",
+                "description": "Not used within the function. Its presence seems unnecessary, possibly indicating an incomplete or unfinished code."
+              },
+              {
+                "name": "attribute_names",
+                "type_name": "[str]",
+                "description": "Not used within the function's logic. It seems to be an unused variable, possibly leftover from previous code revisions or for future implementation purposes."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "therapist = TherapistOnTheLoop()\nid = 1\nattribute_names = [\"automatic_mode\", \"out_llama\", \"texto\"]\ntherapist.update_node_att(id, attribute_names)\n",
+              "description": ""
+            },
+            "name": "update_node_att",
+            "location": {
+              "start": 352,
+              "insert": 354,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 21,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "therapist.py",
+    "path": "agents/therapist_app_agent/src/therapist.py",
+    "content": {
+      "structured": {
+        "description": "A graphical user interface (GUI) using PyQt5 for a dialog box that allows users to interact with an Echo Bot (EBO). The GUI includes text fields, buttons, and checkboxes for inputting and displaying data. It also sets up event connections between these widgets and the Qt application.",
+        "items": [
+          {
+            "id": "f54102c0-c531-beb5-3d44-4af6785f2d3c",
+            "ancestors": [],
+            "description": "Defines a graphical user interface (GUI) for a dialog window with various widgets, including text editors, push buttons, and checkboxes. The GUI is used to control a conversation between EBO (English Bot Online), with the option of auto-mode and ending the game.",
+            "attributes": [],
+            "name": "Ui_Dialog",
+            "location": {
+              "start": 14,
+              "insert": 15,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 59,
+            "docLength": null
+          },
+          {
+            "id": "e231dbb8-6a9d-4d9a-9347-eb8e6fdcf83d",
+            "ancestors": [
+              "f54102c0-c531-beb5-3d44-4af6785f2d3c"
+            ],
+            "description": "Initializes and configures the user interface (UI) elements of a dialog box, such as buttons, text editors, check boxes, and frames. It sets their properties like position, size, style sheet, and read-only status.",
+            "params": [
+              {
+                "name": "Dialog",
+                "type_name": "QDialog",
+                "description": "The object that this UI setup method will configure and set up its user interface for."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "class MyDialog(QtGui.QDialog):\n    def __init__(self, parent=None):\n        super(MyDialog, self).__init__(parent)\n        ui = Ui_Dialog()\n        ui.setupUi(self)",
+              "description": ""
+            },
+            "name": "setupUi",
+            "location": {
+              "start": 15,
+              "insert": 16,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 50,
+            "docLength": null
+          },
+          {
+            "id": "4c197776-33a8-789f-ad4c-76a1b376c8d2",
+            "ancestors": [
+              "f54102c0-c531-beb5-3d44-4af6785f2d3c"
+            ],
+            "description": "Translates and sets the text of various UI elements within a dialog box, including window title, button texts, and labels. The translations are based on locale-dependent strings provided by Qt's `_translate` function.",
+            "params": [
+              {
+                "name": "Dialog",
+                "type_name": "QDialog",
+                "description": "Referred to as `self`."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "dialog = Dialog()\ndialog.retranslateUi(dialog)",
+              "description": ""
+            },
+            "name": "retranslateUi",
+            "location": {
+              "start": 66,
+              "insert": 67,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 7,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "therapist_app_agent.py",
+    "path": "agents/therapist_app_agent/src/therapist_app_agent.py",
+    "content": {
+      "structured": {
+        "description": "An application for a therapist agent. It uses the PySide2 library for GUI and interfaces with other components through Ice interface. The code provides configuration options using argparse, handles signals and implements a specific worker that interacts with proxies.",
+        "items": []
+      }
+    }
+  },
+  {
+    "name": "ui_mainUI.py",
+    "path": "agents/therapist_app_agent/src/ui_mainUI.py",
+    "content": {
+      "structured": {
+        "description": "A user interface (UI) class using Qt's PySide2 library. The UI is composed of several widgets, including buttons, text editors, and combo boxes. The class provides methods for setting up these widgets and connecting them together in a GUI dialog box.",
+        "items": [
+          {
+            "id": "d3821566-5d89-f3ba-8c44-ba05839c343b",
+            "ancestors": [],
+            "description": "Sets up a graphical user interface (GUI) dialog box with various widgets such as push buttons, combo boxes, and text editors. The GUI is designed to allow users to select a game and a player, and then start the game.",
+            "attributes": [],
+            "name": "Ui_guiDlg",
+            "location": {
+              "start": 16,
+              "insert": 17,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 48,
+            "docLength": null
+          },
+          {
+            "id": "8b8cd9b5-6afe-d7be-0c41-490ec2ef9ccf",
+            "ancestors": [
+              "d3821566-5d89-f3ba-8c44-ba05839c343b"
+            ],
+            "description": "Sets up the user interface for a GUI dialog box, guiDlg. It assigns names to the widgets, sets their positions and sizes, and configures their properties such as backgrounds, frames, and read-only modes.",
+            "params": [
+              {
+                "name": "guiDlg",
+                "type_name": "QWidget | None",
+                "description": "Referenced as an object name to set its properties, such as the object name, size, and child widgets like QPushButton, QTextEdit, QComboBox."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "from PyQt5.QtWidgets import QApplication, QWidget\nfrom ui_guiDlg import Ui_guiDlg\n\nif __name__ == \"__main__\":\n    app = QApplication(sys.argv)\n    guiDlg = QWidget()\n    ui = Ui_guiDlg()\n    ui.setupUi(guiDlg)\n    guiDlg.show()\n    sys.exit(app.exec_())",
+              "description": ""
+            },
+            "name": "setupUi",
+            "location": {
+              "start": 17,
+              "insert": 18,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 33,
+            "docLength": null
+          },
+          {
+            "id": "388a9ec7-64f8-8fb7-7140-2815d46b338c",
+            "ancestors": [
+              "d3821566-5d89-f3ba-8c44-ba05839c343b"
+            ],
+            "description": "Retranslates various UI elements, including the window title and text labels, to their translated equivalents using Qt's translation framework for GUI applications.",
+            "params": [
+              {
+                "name": "guiDlg",
+                "type_name": "QDialog",
+                "description": "Used to set properties of the dialog box, such as its title and the text displayed within it."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "guiDlg = QApplication([])\nmyDialog = guiDlg.Dlg()\nui = Ui_guiDlg()\nui.setupUi(myDialog)\nui.retranslateUi(myDialog)",
+              "description": ""
+            },
+            "name": "retranslateUi",
+            "location": {
+              "start": 52,
+              "insert": 53,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 13,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "compiler_depend.ts",
+    "path": "components/dsr-graph/components/idserver/src/CMakeFiles/ICES__home_robolab_robocomp_components_dsr-graph_components_idserver_src.dir/compiler_depend.ts",
+    "content": {
+      "structured": {
+        "description": "A timestamp file for managing dependencies in custom commands within an ICES project. It leverages CMAKE's capabilities for dependency management, ensuring correct ordering and execution of custom commands. The code utilizes CMAKE's built-in mechanisms for handling timestamps and dependencies, facilitating efficient and accurate processing of custom commands.",
+        "items": []
+      }
+    }
+  },
+  {
+    "name": "compiler_depend.ts",
+    "path": "components/dsr-graph/components/idserver/src/CMakeFiles/idserver.dir/compiler_depend.ts",
+    "content": {
+      "structured": {
+        "description": "A timestamp file for compiler-generated dependencies management in an idserver environment. It is automatically generated by CMAKE and should not be edited manually. The file provides a mechanism for tracking timestamps of compiled components to facilitate dependency resolution and optimization.",
+        "items": []
+      }
+    }
+  },
+  {
+    "name": "compiler_depend.ts",
+    "path": "components/dsr-graph/components/idserver/src/CMakeFiles/idserver_autogen.dir/compiler_depend.ts",
+    "content": {
+      "structured": {
+        "description": "A timestamp file generated by CMAKE for custom commands dependencies management. It is used for idserver_autogen and provides information about the dependencies required for the custom command execution. The file does not contain any executable code, but rather serves as a reference for the build process.",
+        "items": []
+      }
+    }
+  },
+  {
+    "name": "specificworker.py",
+    "path": "agents/llama_agent/src/specificworker.py",
+    "content": {
+      "structured": {
+        "description": "A worker class in a robotics framework, specifically for a chatbot that interacts with a language model (LLM). The LLM is used to generate responses to user input, which are stored in a Chroma database. The worker connects to signals from a graph and updates the conversation history when new inputs or outputs are received. It also provides methods for generating responses based on the user's input and updating the corresponding attributes in the graph.",
+        "items": [
+          {
+            "id": "515bd218-f3ad-2685-fd4d-df9720e38dd9",
+            "ancestors": [],
+            "description": "Initializes a DSRGraph object and sets up connections for signal handling, then runs a timer-based computation task. It also defines methods for updating node attributes, generating responses, and managing edges in the graph.",
+            "attributes": [
+              {
+                "name": "Period",
+                "type_name": "int",
+                "description": "2000 milliseconds by default. It represents a time interval for triggering periodic computations by the `compute` method."
+              },
+              {
+                "name": "agent_id",
+                "type_name": "int",
+                "description": "11 by default. It seems to be used as a unique identifier for the worker agent, possibly in the context of a graph or network."
+              },
+              {
+                "name": "g",
+                "type_name": "DSRGraph",
+                "description": "Initialized with the values 0, \"pythonAgent\", and self.agent_id. It is used to interact with nodes and edges in a graph structure."
+              },
+              {
+                "name": "last_in",
+                "type_name": "Attribute[str,int]",
+                "description": "Initially loaded from the \"in_llama\" value of a node named \"LLM\". It stores the last received input text for processing."
+              },
+              {
+                "name": "last_out",
+                "type_name": "str|None",
+                "description": "Initialized with the value obtained from the \"out_llama\" node attribute of the DSRGraph. It represents the last output generated by the LLM (Large Language Model)."
+              },
+              {
+                "name": "last_texto",
+                "type_name": "str",
+                "description": "Associated with a node named \"ASR\". It stores the last text received from the ASR (Automatic Speech Recognition) system."
+              },
+              {
+                "name": "update_node_att",
+                "type_name": "None",
+                "description": "Called when a node's attributes are updated. It checks if the node \"Therapist\" is in automatic mode, updates the \"ASR\" node and the \"LLM\" node accordingly."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "Set to True when initializing the worker, which triggers a startup check that will quit the application after a short delay (200 milliseconds)."
+              },
+              {
+                "name": "timer",
+                "type_name": "QTimer",
+                "description": "Used to schedule a function call (in this case, the `compute` method) at a specific interval (`self.Period`)."
+              },
+              {
+                "name": "compute",
+                "type_name": "QtCoreSlot|bool",
+                "description": "Responsible for computing something when called, presumably based on the timer's periodic timeout event. It does not have any visible effect on the code but returns True."
+              },
+              {
+                "name": "init_llm",
+                "type_name": "NoneNone",
+                "description": "Used to initialize the Large Language Model (LLM) component by loading a pre-trained model, setting parameters for text processing, and defining the embedding function."
+              }
+            ],
+            "name": "SpecificWorker",
+            "location": {
+              "start": 51,
+              "insert": 52,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 199,
+            "docLength": null
+          },
+          {
+            "id": "95ec4992-d055-2ca0-a648-62c701c3d2fe",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Initializes an instance by setting attributes, loading initial values from a graph, connecting signals, and starting a timer or performing startup checks depending on a flag.",
+            "params": [
+              {
+                "name": "proxy_map",
+                "type_name": "object",
+                "description": "Passed to the superclass (`SpecificWorker`) when initializing an instance of this class. The purpose of `proxy_map` is not explicitly stated in the code, but it appears to be related to graph nodes or attributes."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "False by default. It determines whether to perform startup checks or start computing immediately. If set to True, it triggers the `startup_check` method; otherwise, it starts the timer and begins computing."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "proxy_map = {}\nstartup_check = True\nworker = SpecificWorker(proxy_map, startup_check)",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 52,
+              "insert": 53,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 36,
+            "docLength": null
+          },
+          {
+            "id": "07b2bd2a-5823-8fb9-424b-14089e2bc2ab",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Sets parameters and returns a boolean value indicating success (True). The commented-out exception handling code suggests that this function may have been designed to handle potential errors, but currently does nothing with them.",
+            "params": [
+              {
+                "name": "params",
+                "type_name": "object",
+                "description": "Expected to hold parameters that are meant to be set or updated within the context of the current class instance."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "`True`. This indicates that the function has executed successfully without any errors and exceptions."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nparams = {'param1': 'value1', 'param2': 'value2'}\nresult = worker.setParams(params)\nprint(result)",
+              "description": ""
+            },
+            "name": "setParams",
+            "location": {
+              "start": 101,
+              "insert": 107,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "b0f12719-9cc8-9388-8642-e4ce2227486f",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Computes and returns `True`. The method does not contain any computation logic, only comments indicating where a computation should be performed and error handling for Ice.Exception.",
+            "params": [],
+            "returns": {
+              "type_name": "bool",
+              "description": "True."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nworker.timer.start(worker.Period)",
+              "description": ""
+            },
+            "name": "compute",
+            "location": {
+              "start": 110,
+              "insert": 127,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 10,
+            "docLength": null
+          },
+          {
+            "id": "716cd686-7e69-e08e-a148-46b9a1b3b93f",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Concatenates page contents from a list of documents (`docs`) into a single string, using dashes and line breaks to format each document content as a separate item.",
+            "params": [
+              {
+                "name": "docs",
+                "type_name": "List[str]",
+                "description": "Expected to contain one or more documents, where each document is represented as a string containing page content."
+              }
+            ],
+            "returns": {
+              "type_name": "str",
+              "description": "A formatted string consisting of a list of documents, where each document is represented as a bullet point followed by its page content, with each entry separated by a newline character."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\ndocs = [PageContent(\"This page content\"), PageContent(\"Another page content\")]\nformatted_text = worker.format_docs(docs)",
+              "description": ""
+            },
+            "name": "format_docs",
+            "location": {
+              "start": 132,
+              "insert": 133,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 6,
+            "docLength": null
+          },
+          {
+            "id": "b41b3b73-3e7d-ae90-0744-ff7c9252228f",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Initializes a large language model (LLM) and a text database. It downloads an LLM, configures it for use with a specific dataset, and creates a retriever to index the data. The method also defines a template for user prompts and sets up a pipeline for processing input and output.",
+            "params": [],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nworker.init_llm()\n",
+              "description": "\n\nThis will initialize the LLMA model and create a retriever using the specified model name."
+            },
+            "name": "init_llm",
+            "location": {
+              "start": 139,
+              "insert": 141,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 51,
+            "docLength": null
+          },
+          {
+            "id": "422e3948-6eb9-ff92-0c4d-083ceae67d85",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Generates an assistant's response to a user's input by invoking the chain and adds the conversation history to a database before returning the response.",
+            "params": [
+              {
+                "name": "user_response",
+                "type_name": "str | None",
+                "description": "Expected to be the user's input or message that triggers the response from the language model (LLM)."
+              }
+            ],
+            "returns": {
+              "type_name": "str",
+              "description": "The response generated by the Language Model (LLM) for a given user input. The returned value is then printed to the console and also stored in a database along with the corresponding user input."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=True)\nuser_response = \"How are you?\"\nllm_response = worker.LLM_generateResponse(user_response)",
+              "description": ""
+            },
+            "name": "LLM_generateResponse",
+            "location": {
+              "start": 204,
+              "insert": 206,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 7,
+            "docLength": null
+          },
+          {
+            "id": "9443cad6-a340-239b-d141-a720562bd241",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Updates an LLM node's attribute \"out_llama\" with a new Attribute object, passing a response and agent ID as parameters. If the LLM node is not found, it prints an error message and returns False.",
+            "params": [
+              {
+                "name": "respuesta_gen",
+                "type_name": "object",
+                "description": "Expected to contain data that represents the generated response. The exact structure and nature of this object are not specified."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "False if the node \"LLM\" is not found, and None otherwise."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nrespuesta_gen = \"sample response\"\nworker.actualizar_out(respuesta_gen)",
+              "description": ""
+            },
+            "name": "actualizar_out",
+            "location": {
+              "start": 215,
+              "insert": 216,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 9,
+            "docLength": null
+          },
+          {
+            "id": "228297cb-02cb-d89c-d14e-5c8392e88da3",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Modifies an attribute called \"in_llama\" of a node named \"LLM\" in a graph. If the node does not exist, it prints a message and returns False. Otherwise, it updates the node with the modified attribute.",
+            "params": [],
+            "returns": {
+              "type_name": "bool",
+              "description": "False if no LLM node exists or the modification to the attribute fails, and an unspecified value (not necessarily True) otherwise."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nworker.borrar_in()\n",
+              "description": ""
+            },
+            "name": "borrar_in",
+            "location": {
+              "start": 226,
+              "insert": 227,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 9,
+            "docLength": null
+          },
+          {
+            "id": "97a0536b-4a60-d889-3148-1de34a19ee61",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Updates an attribute \"in_llama\" of a node named \"LLM\" in a graph. If the node does not exist, it prints an error message and returns False. Otherwise, it sets the attribute to a new value and updates the node in the graph.",
+            "params": [
+              {
+                "name": "nuevo",
+                "type_name": "str | int",
+                "description": "Expected to be new value for the attribute \"in_llama\" of the node \"LLM\"."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "False if a node \"LLM\" cannot be found, and True otherwise after modifying an attribute on that node and updating it in the graph."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nnuevo = \"Nuevo valor\"\nactualizar_in(worker, nuevo)",
+              "description": ""
+            },
+            "name": "actualizar_in",
+            "location": {
+              "start": 236,
+              "insert": 237,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 9,
+            "docLength": null
+          },
+          {
+            "id": "8a2ff97b-237c-bab8-264b-1db53e7b82af",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Updates node attributes and performs specific actions based on their values. It checks for changes in ASR and LLM nodes' attributes, updating last text and input values, and potentially triggering response generation and output updates if necessary.",
+            "params": [
+              {
+                "name": "id",
+                "type_name": "int",
+                "description": "Not used within the scope of this code snippet. Its presence seems unnecessary, implying that it might be intended for future use or debugging purposes."
+              },
+              {
+                "name": "attribute_names",
+                "type_name": "[str]",
+                "description": "Not used within the function body, indicating that it is either unused or intended for future implementation. Its purpose remains unclear from this code snippet."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nworker.update_node_att(11, [\"automatic_mode\", \"in_llama\", \"out_llama\"])",
+              "description": ""
+            },
+            "name": "update_node_att",
+            "location": {
+              "start": 250,
+              "insert": 251,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 24,
+            "docLength": null
+          },
+          {
+            "id": "c83a0406-e0a6-5789-c14f-bdd71e0b68ce",
+            "ancestors": [
+              "515bd218-f3ad-2685-fd4d-df9720e38dd9"
+            ],
+            "description": "Updates an edge between two nodes with a specified type, printing a message to the console indicating the operation. The nodes are identified by integers fr and to, and the type is represented as a string.",
+            "params": [
+              {
+                "name": "fr",
+                "type_name": "int",
+                "description": "Assigned an integer value representing the from node or edge identifier. It is used to identify the starting point of the edge being updated."
+              },
+              {
+                "name": "to",
+                "type_name": "int",
+                "description": "Referred to as the edge's target node or destination. It represents the node that the edge connects to the source node represented by the `fr` parameter."
+              },
+              {
+                "name": "type",
+                "type_name": "str",
+                "description": "Used to specify the type of edge being updated, likely representing information about the relationship between nodes fr and to."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map)\nworker.update_edge(1, 2, 'new')",
+              "description": ""
+            },
+            "name": "update_edge",
+            "location": {
+              "start": 283,
+              "insert": 285,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "specificworker.py",
+    "path": "agents/tts_agent/src/specificworker.py",
+    "content": {
+      "structured": {
+        "description": "A specific worker class that uses PySide2 and genericworker libraries to interact with DSR (Distributed Social Robotics) graph nodes and edges, and RoboComp emotional motor proxy. The worker class initializes TTS (Text-To-Speech) model and LLama language model, and uses them to generate and play audio responses to text inputs. It also updates nodes and edges in the DSR graph based on certain conditions.",
+        "items": [
+          {
+            "id": "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4",
+            "ancestors": [],
+            "description": "Processes text-to-speech (TTS) and speech recognition (ASR) tasks, managing node attributes and edge connections within a graph structure. It handles startup checks, audio generation, and playback, as well as updating and deleting nodes and edges.",
+            "attributes": [
+              {
+                "name": "Period",
+                "type_name": "int",
+                "description": "2000 milliseconds (2 seconds). It appears to be used as a timer period for scheduling tasks."
+              },
+              {
+                "name": "audioenviado",
+                "type_name": "bool",
+                "description": "Initialized as `False`. It appears to indicate whether audio has been sent or not, but its purpose and usage within the class are unclear."
+              },
+              {
+                "name": "text_queue",
+                "type_name": "Queue[max_queue]",
+                "description": "Used for storing text messages that need to be processed by the `new_tts` method."
+              },
+              {
+                "name": "device",
+                "type_name": "str",
+                "description": "Assigned the value `'cuda:0'`. This suggests that it refers to a device, possibly a GPU, with ID '0'."
+              },
+              {
+                "name": "model",
+                "type_name": "TTS",
+                "description": "Initialized with a language ('ES' for Spanish) and device ('cuda:0')."
+              },
+              {
+                "name": "speaker_ids",
+                "type_name": "Dict[str,int]",
+                "description": "Used by the TTS (Text-To-Speech) model to identify speakers. It maps speaker names to corresponding IDs, allowing for specific voices or languages to be selected."
+              },
+              {
+                "name": "speed",
+                "type_name": "float",
+                "description": "1.0 by default. It seems to control the playback speed of audio generated by the Text-To-Speech (TTS) model, with higher values indicating faster playback and lower values indicating slower playback."
+              },
+              {
+                "name": "agent_id",
+                "type_name": "int",
+                "description": "5 by default, it seems to be used as a reference or identifier for the agent (maybe a robot or a software agent) that this worker represents."
+              },
+              {
+                "name": "g",
+                "type_name": "DSRGraph",
+                "description": "Initialized with a value of DSRGraph(0, \"pythonAgent\", self.agent_id). This suggests that it represents a graph object used to manage nodes and edges in a directed graph."
+              },
+              {
+                "name": "last_text",
+                "type_name": "str",
+                "description": "Loaded from a node named \"TTS\" within a graph object `g`. It stores the text to be spoken or generated by the TTS system."
+              },
+              {
+                "name": "last_out",
+                "type_name": "str|None",
+                "description": "Stored in a node \"LLM\" of the graph g. It seems to hold the output of a language model."
+              },
+              {
+                "name": "update_node_att",
+                "type_name": "NoneNone,int,List[str]",
+                "description": "Used to check if a node's attributes have been updated and update the last text and out_llama values accordingly. It also puts the new value in the text queue for further processing."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "Used for a startup check. When it's set to True, it will trigger a QTimer event after 200 milliseconds that will quit the application."
+              },
+              {
+                "name": "timer",
+                "type_name": "QTimer",
+                "description": "Started in the `__init__` method with a period of `self.Period`. When the timer times out, it triggers the `compute` method."
+              },
+              {
+                "name": "compute",
+                "type_name": "bool|None",
+                "description": "Called when a timer event occurs. It checks if there are any texts to say (i.e., not empty queue) and calls the `new_tts` method if so, otherwise does nothing."
+              },
+              {
+                "name": "emotionalmotor_proxy",
+                "type_name": "object",
+                "description": "Not defined within this code. It seems to be a proxy for controlling the emotional motor of the worker, allowing methods such as expressing joy, anger, fear, or talking."
+              }
+            ],
+            "name": "SpecificWorker",
+            "location": {
+              "start": 70,
+              "insert": 71,
+              "offset": " ",
+              "indent": 4,
+              "comment": null
+            },
+            "item_type": "class",
+            "length": 187,
+            "docLength": null
+          },
+          {
+            "id": "15777d0f-c7db-dfbb-e84e-b2cbd2e8525a",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Initializes an object by setting instance variables, connecting signals to methods, and starting a timer. It also checks for startup issues if required. The method sets up various attributes and proxies for a worker that performs tasks related to text-to-speech conversion.",
+            "params": [
+              {
+                "name": "proxy_map",
+                "type_name": "Dict[str, object]",
+                "description": "Passed to the superclass `super(SpecificWorker, self).__init__(proxy_map)`. It seems to be used for initialization purposes."
+              },
+              {
+                "name": "startup_check",
+                "type_name": "bool",
+                "description": "Default set to False. It indicates whether a startup check should be performed when initializing the object."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "proxy_map = {}\nstartup_check = False\nworker = SpecificWorker(proxy_map, startup_check)",
+              "description": ""
+            },
+            "name": "__init__",
+            "location": {
+              "start": 71,
+              "insert": 72,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "constructor",
+            "length": 43,
+            "docLength": null
+          },
+          {
+            "id": "e2f5659b-80c0-499a-484d-81788de3544a",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Sets parameters and returns a boolean value indicating success or failure. In its current form, it returns True regardless of any exceptions that may occur while setting the parameters, and does not provide error handling information.",
+            "params": [
+              {
+                "name": "params",
+                "type_name": "Any",
+                "description": "Expected to be set by the caller, possibly representing configuration or settings for the object on which this method is called."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "True. It indicates that the operation has been completed successfully without any exceptions being raised."
+            },
+            "usage": {
+              "language": "python",
+              "code": "specific_worker = SpecificWorker(proxy_map, startup_check=False)\nparams = {'param1': 'value1', 'param2': 'value2'}\nresult = specific_worker.setParams(params)",
+              "description": ""
+            },
+            "name": "setParams",
+            "location": {
+              "start": 130,
+              "insert": 136,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 4,
+            "docLength": null
+          },
+          {
+            "id": "e8d66e4e-f8fe-72bb-a340-67de3dd6ed7d",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Generates text-to-speech (TTS) audio for input text, splits it into smaller parts, and plays them while sending emotional feedback to a proxy. It also updates an ASR node in a graph.",
+            "params": [
+              {
+                "name": "text",
+                "type_name": "str",
+                "description": "Expected to be the text that needs to be converted into audio. The function breaks this text into smaller parts, generates audio for each part, and then plays it back."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "False if there is no ASR node, otherwise it modifies an attribute of the ASR node and returns a value indicating success (True)."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\ntext_to_speak = \"Hello world! This is a test.\"\nworker.new_tts(text_to_speak)",
+              "description": ""
+            },
+            "name": "new_tts",
+            "location": {
+              "start": 140,
+              "insert": 142,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 66,
+            "docLength": null
+          },
+          {
+            "id": "aa071794-0edb-ada3-9e48-4f0089dba009",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4",
+              "e8d66e4e-f8fe-72bb-a340-67de3dd6ed7d"
+            ],
+            "description": "Splits a given text into multiple parts, each approximately 75 or 150 characters long, depending on whether it is the first or subsequent part. It stops at the nearest punctuation mark (., !, ?) if no spaces are found within the limit.",
+            "params": [
+              {
+                "name": "text",
+                "type_name": "str",
+                "description": "Expected to be a string that contains text content, which may include punctuation marks such as `.`, `!`, and `?`."
+              }
+            ],
+            "returns": {
+              "type_name": "List[str]",
+              "description": "A list of strings, where each string represents a part of the input text, split based on sentence boundaries and a maximum length of either 75 or 150 characters for the first two parts, respectively."
+            },
+            "usage": {
+              "language": "python",
+              "code": "result = split_text(\"This is the first sentence. This is the second sentence?\")\nfor part in result:\n    # use or manipulate the parts as needed\n    pass",
+              "description": ""
+            },
+            "name": "split_text",
+            "location": {
+              "start": 142,
+              "insert": 143,
+              "offset": " ",
+              "indent": 12,
+              "comment": null
+            },
+            "item_type": "function",
+            "length": 19,
+            "docLength": null
+          },
+          {
+            "id": "ccec7f12-80f7-bbb6-be4f-75ea8759e525",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4",
+              "e8d66e4e-f8fe-72bb-a340-67de3dd6ed7d"
+            ],
+            "description": "Processes a list of text parts and generates corresponding audio files using a text-to-speech model. It iterates over the parts, converts each to an audio file, and adds the file path to a queue. Finally, it signals the end of processing by adding `None` to the queue.",
+            "params": [
+              {
+                "name": "queue",
+                "type_name": "Queue",
+                "description": "Used to put audio files into it after they are generated, allowing them to be retrieved later for further processing or playback."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "queue = Queue()\ngenerate_audio(queue)\n",
+              "description": ""
+            },
+            "name": "generate_audio",
+            "location": {
+              "start": 168,
+              "insert": 169,
+              "offset": " ",
+              "indent": 12,
+              "comment": null
+            },
+            "item_type": "function",
+            "length": 6,
+            "docLength": null
+          },
+          {
+            "id": "78bc1ecb-9388-e3af-0c44-f10613fe1d1b",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4",
+              "e8d66e4e-f8fe-72bb-a340-67de3dd6ed7d"
+            ],
+            "description": "Retrieves audio files from a queue, plays them using the `AudioSegment` library and the `play` function, and indicates to an emotional motor proxy that talking is occurring during playback.",
+            "params": [
+              {
+                "name": "queue",
+                "type_name": "Queue",
+                "description": "Assumed to be a thread-safe queue, possibly implemented using a multiprocessing queue or a thread-safe list. The function gets tasks from this queue until it receives a null task to exit."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "queue = queue.Queue()\nplay_audio(queue)\nqueue.put(\"path_to_first_audio_file.wav\")\nqueue.put(None)  # signal termination",
+              "description": ""
+            },
+            "name": "play_audio",
+            "location": {
+              "start": 177,
+              "insert": 178,
+              "offset": " ",
+              "indent": 12,
+              "comment": null
+            },
+            "item_type": "function",
+            "length": 11,
+            "docLength": null
+          },
+          {
+            "id": "ad136da5-3bb4-b39e-ef40-d0744b562303",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Retrieves text from a queue when it is not empty, processes the text by calling the `new_tts` method, and returns True to indicate successful execution. If the queue is empty, the method does nothing.",
+            "params": [],
+            "returns": {
+              "type_name": "bool",
+              "description": "`True`. This indicates that the operation was successful, and any output is not explicitly handled within this function."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\ntext_queue = worker.text_queue\ntext_queue.put(\"Hello World\")\nworker.compute()\n",
+              "description": "\nThis code creates an instance of `SpecificWorker` and puts a string \"Hello World\" into the text queue. Then it calls the `compute` method on this worker, which checks if there is any item in the text queue. Since there is one item, it gets that item and passes it to the `new_tts` method for processing."
+            },
+            "name": "compute",
+            "location": {
+              "start": 227,
+              "insert": 229,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 10,
+            "docLength": null
+          },
+          {
+            "id": "a3c11032-11e7-f0ba-5f43-9b5013be4c7d",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Updates the \"to_say\" attribute of a TTS (Text-To-Speech) node with a new value, if such a node exists, and then saves the updated node back to its original graph.",
+            "params": [
+              {
+                "name": "nuevo",
+                "type_name": "str | bytes",
+                "description": "Expected to be used as the value for the \"to_say\" attribute of the TTS node."
+              }
+            ],
+            "returns": {
+              "type_name": "bool",
+              "description": "False if it cannot find a node named \"TTS\" or True otherwise, indicating whether the attribute \"to_say\" was successfully modified and the node updated."
+            },
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nnuevo_texto = \"Hello world\"\nworker.actualizar_to_say(nuevo_texto)",
+              "description": ""
+            },
+            "name": "actualizar_to_say",
+            "location": {
+              "start": 258,
+              "insert": 259,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 9,
+            "docLength": null
+          },
+          {
+            "id": "9f76d4a3-c93c-2581-e149-1e4138741543",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Updates attributes of nodes \"Therapist\", \"LLM\" and \"TTS\" based on their current values, updating internal state variables as needed, and logs messages to console when certain conditions are met.",
+            "params": [
+              {
+                "name": "id",
+                "type_name": "int",
+                "description": "Used to specify an identifier that presumably identifies the node for which attributes are being updated or retrieved."
+              },
+              {
+                "name": "attribute_names",
+                "type_name": "[str]",
+                "description": "Expected to be a list of strings representing attribute names associated with the node identified by the given `id`."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map)\nupdate_node_att(worker, 1, [\"attribute_name_1\", \"attribute_name_2\"])",
+              "description": ""
+            },
+            "name": "update_node_att",
+            "location": {
+              "start": 271,
+              "insert": 272,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 19,
+            "docLength": null
+          },
+          {
+            "id": "6b6b7e49-5419-a0bf-f944-3931f3bf3590",
+            "ancestors": [
+              "656b8a38-1d0b-adb4-9c4c-f587ada3d8c4"
+            ],
+            "description": "Updates an edge in a graph by specifying its source (from), destination (to), and type.",
+            "params": [
+              {
+                "name": "fr",
+                "type_name": "int",
+                "description": "Used as the starting point or origin node for an edge in a graph data structure."
+              },
+              {
+                "name": "to",
+                "type_name": "int",
+                "description": "Used to specify the destination node or edge being updated."
+              },
+              {
+                "name": "type",
+                "type_name": "str",
+                "description": "Used to specify the type of edge being updated between nodes `fr` and `to`."
+              }
+            ],
+            "returns": null,
+            "usage": {
+              "language": "python",
+              "code": "worker = SpecificWorker(proxy_map, startup_check=False)\nworker.update_edge(1, 2, 'normal')",
+              "description": ""
+            },
+            "name": "update_edge",
+            "location": {
+              "start": 298,
+              "insert": 300,
+              "offset": " ",
+              "indent": 8,
+              "comment": null
+            },
+            "item_type": "method",
+            "length": 3,
+            "docLength": null
+          }
+        ]
+      }
+    }
+  }
+]

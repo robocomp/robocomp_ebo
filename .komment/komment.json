@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "version": "1",
+    "updated_at": "2024-07-26T11:01:41.980Z",
+    "created_at": "2024-07-26T11:01:51.339Z",
+    "pipelines": [
+      "2ad8a399-c5a5-4614-bf81-fc3e75959f2d"
+    ]
+  },
+  "lookup": [
+    [
+      "agents/therapist_app_agent/src/genericworker.py",
+      "agents/therapist_app_agent/src/interfaces.py",
+      "agents/therapist_app_agent/src/specificworker.py",
+      "agents/therapist_app_agent/src/therapist.py",
+      "agents/therapist_app_agent/src/therapist_app_agent.py",
+      "agents/therapist_app_agent/src/ui_mainUI.py",
+      "components/dsr-graph/components/idserver/src/CMakeFiles/ICES__home_robolab_robocomp_components_dsr-graph_components_idserver_src.dir/compiler_depend.ts",
+      "components/dsr-graph/components/idserver/src/CMakeFiles/idserver.dir/compiler_depend.ts",
+      "components/dsr-graph/components/idserver/src/CMakeFiles/idserver_autogen.dir/compiler_depend.ts",
+      "agents/llama_agent/src/specificworker.py",
+      "agents/tts_agent/src/specificworker.py"
+    ]
+  ]
+}
